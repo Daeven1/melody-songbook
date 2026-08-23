@@ -26,7 +26,7 @@ describe('phrase data', () => {
       expect(grouping.reduce((a, b) => a + b, 0)).toBe(bars)
     })
 
-    it(`${song.id} — letters start at A with no gaps`, () => {
+    it(`${song.id} — letters are contiguous from A`, () => {
       const distinct = [...new Set(PHRASES[song.id]!.letters)].sort()
       const expected = distinct.map((_, i) => String.fromCharCode(65 + i))
       expect(distinct).toEqual(expected)
