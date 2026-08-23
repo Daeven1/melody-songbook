@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { DOMParser } from '@xmldom/xmldom'
 import { readMscz } from '../../scripts/import/mscz'
 import { musicStaff, extractSections } from '../../scripts/import/sections'
 import { barsFromMeasures } from '../../scripts/import/bars'
@@ -10,6 +11,14 @@ const BORDUNS = 'source/G2 - Bordun Techniques & No Lyrics.mscz'
 function firstSectionBars(path: string) {
   const sections = extractSections(musicStaff(readMscz(path)))
   return barsFromMeasures(sections[0]!.measures)
+}
+
+/** Builds a synthetic <Measure> from a raw <voice> body, for testing rejection paths
+ *  that don't occur anywhere in the real corpus. */
+function measureFromVoiceXml(voiceInnerXml: string): Element {
+  const xml = `<Measure><voice>${voiceInnerXml}</voice></Measure>`
+  const doc = new DOMParser().parseFromString(xml, 'text/xml') as unknown as Document
+  return doc.documentElement as unknown as Element
 }
 
 describe('barsFromMeasures — Good Night, Sleep Tight in C (golden test)', () => {
@@ -76,5 +85,37 @@ describe('barsFromMeasures — other corpus shapes', () => {
     expect(first.pitch).toBe(72)             // C5
     expect(first.extraPitches).toEqual([79])  // G5
     expect(first.duration).toBe('half')
+  })
+})
+
+describe('barsFromMeasures — rejects unverifiable data', () => {
+  it('throws on an empty <pitch>, rather than coercing it to 0', () => {
+    const measure = measureFromVoiceXml(`
+      <Chord>
+        <durationType>quarter</durationType>
+        <Note>
+          <pitch></pitch>
+          <tpc>15</tpc>
+        </Note>
+      </Chord>
+    `)
+    expect(() => barsFromMeasures([measure])).toThrow('Missing <pitch>')
+  })
+
+  it('throws on an unparseable lyric line number, rather than dropping the lyric', () => {
+    const measure = measureFromVoiceXml(`
+      <Chord>
+        <durationType>quarter</durationType>
+        <Note>
+          <pitch>67</pitch>
+          <tpc>15</tpc>
+        </Note>
+        <Lyrics>
+          <no>x</no>
+          <text>oops</text>
+        </Lyrics>
+      </Chord>
+    `)
+    expect(() => barsFromMeasures([measure])).toThrow('<no> is not a valid lyric line number')
   })
 })

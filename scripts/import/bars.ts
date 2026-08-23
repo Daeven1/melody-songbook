@@ -35,7 +35,7 @@ function readDuration(el: Element): Duration {
 
 function requireInt(el: Element, childName: string): number {
   const raw = textOf(el, childName)
-  if (raw === null) throw new Error(`Missing <${childName}>`)
+  if (raw === null || raw === '') throw new Error(`Missing <${childName}>`)
   const value = Number(raw)
   if (!Number.isInteger(value)) throw new Error(`<${childName}> is not an integer: "${raw}"`)
   return value
@@ -64,12 +64,23 @@ function restToNote(rest: Element): Note {
   }
 }
 
+/** Absent <no> means line 0; anything present must parse as a non-negative integer. */
+function readLyricLine(lyrics: Element): number {
+  const raw = textOf(lyrics, 'no')
+  if (raw === null || raw === '') return 0
+  const value = Number(raw)
+  if (!Number.isInteger(value) || value < 0) {
+    throw new Error(`<no> is not a valid lyric line number: "${raw}"`)
+  }
+  return value
+}
+
 const SYLLABIC_VALUES: LyricSyllable['syllabic'][] = ['single', 'begin', 'middle', 'end']
 
 function readLyrics(chord: Element): LyricSyllable[] {
   const byLine: LyricSyllable[] = []
   for (const el of childElements(chord).filter(e => e.nodeName === 'Lyrics')) {
-    const line = Number(textOf(el, 'no') ?? '0')
+    const line = readLyricLine(el)
     const textEl = firstChildNamed(el, 'text')
     const syllabic = textOf(el, 'syllabic') ?? 'single'
     if (!SYLLABIC_VALUES.includes(syllabic as LyricSyllable['syllabic'])) {
