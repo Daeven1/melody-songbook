@@ -24,6 +24,13 @@ const TITLE_OF_PATTERN: Record<string, string> = Object.fromEntries(
   Object.entries(PATTERN_IDS).map(([title, id]) => [id, title]),
 )
 
+/**
+ * The printed book's page order — distinct from both the source file's frame order
+ * (levels, broken, chord, crossover-challenge, crossover) and Map insertion order.
+ * Callers building buttons/pages from this array rely on this order directly.
+ */
+const PAGE_ORDER: readonly BordunId[] = ['chord', 'broken', 'levels', 'crossover', 'crossover-challenge']
+
 /** Tonic pitch class of each songbook key. */
 const KEY_BY_TONIC: Record<number, KeyName> = { 0: 'C', 2: 'D', 5: 'F', 7: 'G' }
 
@@ -131,7 +138,7 @@ export function buildBorduns(path: string): Bordun[] {
     collected.get(id)![keyName] = events
   }
 
-  return [...collected.entries()].map(([id, keys]) => {
+  const results = [...collected.entries()].map(([id, keys]) => {
     for (const keyName of KEY_NAMES) {
       if (!keys[keyName]) throw new Error(`Bordun "${id}" is missing the key of ${keyName}`)
     }
@@ -148,4 +155,8 @@ export function buildBorduns(path: string): Bordun[] {
       keys: keys as Record<KeyName, BordunEvent[]>,
     }
   })
+
+  // Emit in the book's printed page order, not Map insertion order (which is the
+  // source file's frame order).
+  return [...results].sort((a, b) => PAGE_ORDER.indexOf(a.id) - PAGE_ORDER.indexOf(b.id))
 }

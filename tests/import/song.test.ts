@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { buildSong, slugify, levelFromFilename } from '../../scripts/import/song'
+import { DOMParser } from '@xmldom/xmldom'
+import { buildSong, slugify, levelFromFilename, readTempo } from '../../scripts/import/song'
 import { systemBreaksFor } from '../../scripts/import/systems'
+
+function docFromXml(xml: string): Document {
+  return new DOMParser().parseFromString(xml, 'text/xml') as unknown as Document
+}
 
 const GOODNIGHT = 'source/G2 Melodies Level 1 (Goodnight, Sleep Tight).mscz'
 const OLD_MACDONALD = 'source/G2 Melodies Level 3 (Old Macdonald).mscz'
@@ -83,5 +88,40 @@ describe('buildSong', () => {
     expect(buildSong(FROG).keys.G.label).toBe('DB')
     expect(buildSong(AU_CLAIR).keys.G.label).toBe('GAB')
     expect(buildSong(CLOSET_KEY).keys.F.label).toBe('FGA')
+  })
+
+  it('falls back to 100 bpm — no file in the corpus authors a tempo marking', () => {
+    expect(buildSong(GOODNIGHT).defaultTempo).toBe(100)
+  })
+})
+
+describe('readTempo', () => {
+  it('falls back to 100 bpm when the document has no <Tempo> element', () => {
+    expect(readTempo(docFromXml('<museScore></museScore>'))).toBe(100)
+  })
+
+  it('converts quarter-notes-per-second to rounded BPM', () => {
+    // MuseScore encodes tempo as quarter-notes-per-second: 2 == 120 BPM.
+    const doc = docFromXml('<museScore><Tempo><tempo>2</tempo></Tempo></museScore>')
+    expect(readTempo(doc)).toBe(120)
+  })
+
+  it('rounds a fractional result', () => {
+    const doc = docFromXml('<museScore><Tempo><tempo>1.75</tempo></Tempo></museScore>')
+    expect(readTempo(doc)).toBe(105) // 1.75 * 60 = 105
+  })
+
+  it('throws when multiple <Tempo> elements disagree', () => {
+    const doc = docFromXml(
+      '<museScore><Tempo><tempo>2</tempo></Tempo><Tempo><tempo>2.5</tempo></Tempo></museScore>',
+    )
+    expect(() => readTempo(doc)).toThrow(/disagreeing tempo markings/)
+  })
+
+  it('does not throw when multiple <Tempo> elements agree', () => {
+    const doc = docFromXml(
+      '<museScore><Tempo><tempo>2</tempo></Tempo><Tempo><tempo>2</tempo></Tempo></museScore>',
+    )
+    expect(readTempo(doc)).toBe(120)
   })
 })

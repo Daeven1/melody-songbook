@@ -6,6 +6,9 @@ import { musicStaff, extractSections } from './sections'
 import type { SectionText } from './sections'
 import { barsFromMeasures } from './bars'
 import { systemBreaksFor } from './systems'
+import { textOf } from './dom'
+
+const DEFAULT_TEMPO = 100
 
 /**
  * Matches a key label ('GE', 'AF#', 'DB', 'GA EDC', 'CDEGA C₁', …) and nothing else in
@@ -59,8 +62,36 @@ export function levelFromFilename(path: string): 1 | 2 | 3 | 4 {
   return level
 }
 
+/**
+ * MuseScore stores an authored tempo as a <Tempo> element whose <tempo> child holds
+ * quarter-notes-per-second as a decimal (e.g. 2 == 120 BPM); convert and round to BPM.
+ * Falls back to DEFAULT_TEMPO when the file has no tempo marking, which is every file in
+ * the corpus today. Exported for direct unit testing since no real file exercises this.
+ */
+export function readTempo(doc: Document): number {
+  const tempoEls = doc.getElementsByTagName('Tempo')
+  if (tempoEls.length === 0) return DEFAULT_TEMPO
+
+  const bpms = new Set<number>()
+  for (let i = 0; i < tempoEls.length; i++) {
+    const el = tempoEls[i] as unknown as Element
+    const raw = textOf(el, 'tempo')
+    if (raw === null || raw === '') throw new Error('A <Tempo> element has no <tempo> value')
+    const quarterNotesPerSecond = Number(raw)
+    if (!Number.isFinite(quarterNotesPerSecond) || quarterNotesPerSecond <= 0) {
+      throw new Error(`Invalid <tempo> value: "${raw}"`)
+    }
+    bpms.add(Math.round(quarterNotesPerSecond * 60))
+  }
+  if (bpms.size > 1) {
+    throw new Error(`Song has disagreeing tempo markings: ${[...bpms].join(', ')} BPM`)
+  }
+  return [...bpms][0]!
+}
+
 export function buildSong(path: string): Song {
-  const sections = extractSections(musicStaff(readMscz(path)))
+  const doc = readMscz(path)
+  const sections = extractSections(musicStaff(doc))
   if (sections.length !== KEY_NAMES.length) {
     throw new Error(
       `${basename(path)}: expected ${KEY_NAMES.length} key sections, found ${sections.length}`,
@@ -96,6 +127,6 @@ export function buildSong(path: string): Song {
     level: levelFromFilename(path),
     timeSignature: [4, 4],
     keys,
-    defaultTempo: 100,
+    defaultTempo: readTempo(doc),
   }
 }

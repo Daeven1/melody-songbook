@@ -39,7 +39,7 @@ describe('buildBorduns', () => {
     expect(byId.crossover!.keys.C.map(e => e.pitches)).toEqual([[72], [79], [84], []])
   })
 
-  it('distinguishes the challenge crossover by its subtitle', () => {
+  it('distinguishes the challenge crossover by musical shape (ends on a sounding note, not a rest)', () => {
     expect(byId['crossover-challenge']!.isChallenge).toBe(true)
     expect(byId.crossover!.isChallenge).toBe(false)
     expect(byId['crossover-challenge']!.keys.C.map(e => e.pitches))
@@ -72,6 +72,15 @@ describe('buildBorduns', () => {
   it('derives the label from pattern identity, not a parsed frame title', () => {
     expect(byId.crossover!.label).toBe('Crossover Bordun')
     expect(byId['crossover-challenge']!.label).toBe('Crossover Bordun *CHALLENGE*')
+  })
+
+  it('emits borduns in the printed book\'s page order, not the source file\'s frame order', () => {
+    // The source file's frame order is levels, broken, chord, crossover-challenge,
+    // crossover — the book's printed order is chord, broken, levels, crossover,
+    // crossover-challenge. Consumers iterate this array directly to build buttons.
+    expect(borduns.map(b => b.id)).toEqual([
+      'chord', 'broken', 'levels', 'crossover', 'crossover-challenge',
+    ])
   })
 })
 

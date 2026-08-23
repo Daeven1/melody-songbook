@@ -1,7 +1,7 @@
 [
   {
-    "id": "levels",
-    "label": "Levels Bordun",
+    "id": "chord",
+    "label": "Chord Bordun",
     "isChallenge": false,
     "keys": {
       "C": [
@@ -17,8 +17,8 @@
         {
           "beat": 2,
           "pitches": [
-            84,
-            91
+            72,
+            79
           ],
           "duration": "half",
           "hand": "both"
@@ -37,8 +37,8 @@
         {
           "beat": 2,
           "pitches": [
-            86,
-            93
+            74,
+            81
           ],
           "duration": "half",
           "hand": "both"
@@ -57,8 +57,8 @@
         {
           "beat": 2,
           "pitches": [
-            89,
-            96
+            77,
+            84
           ],
           "duration": "half",
           "hand": "both"
@@ -77,8 +77,8 @@
         {
           "beat": 2,
           "pitches": [
-            91,
-            98
+            79,
+            86
           ],
           "duration": "half",
           "hand": "both"
@@ -230,8 +230,8 @@
     }
   },
   {
-    "id": "chord",
-    "label": "Chord Bordun",
+    "id": "levels",
+    "label": "Levels Bordun",
     "isChallenge": false,
     "keys": {
       "C": [
@@ -247,8 +247,8 @@
         {
           "beat": 2,
           "pitches": [
-            72,
-            79
+            84,
+            91
           ],
           "duration": "half",
           "hand": "both"
@@ -267,8 +267,8 @@
         {
           "beat": 2,
           "pitches": [
-            74,
-            81
+            86,
+            93
           ],
           "duration": "half",
           "hand": "both"
@@ -287,8 +287,8 @@
         {
           "beat": 2,
           "pitches": [
-            77,
-            84
+            89,
+            96
           ],
           "duration": "half",
           "hand": "both"
@@ -307,11 +307,146 @@
         {
           "beat": 2,
           "pitches": [
-            79,
-            86
+            91,
+            98
           ],
           "duration": "half",
           "hand": "both"
+        }
+      ]
+    }
+  },
+  {
+    "id": "crossover",
+    "label": "Crossover Bordun",
+    "isChallenge": false,
+    "keys": {
+      "C": [
+        {
+          "beat": 0,
+          "pitches": [
+            72
+          ],
+          "duration": "quarter",
+          "hand": "L"
+        },
+        {
+          "beat": 1,
+          "pitches": [
+            79
+          ],
+          "duration": "quarter",
+          "hand": "R"
+        },
+        {
+          "beat": 2,
+          "pitches": [
+            84
+          ],
+          "duration": "quarter",
+          "hand": "R"
+        },
+        {
+          "beat": 3,
+          "pitches": [],
+          "duration": "quarter",
+          "hand": "R"
+        }
+      ],
+      "D": [
+        {
+          "beat": 0,
+          "pitches": [
+            74
+          ],
+          "duration": "quarter",
+          "hand": "L"
+        },
+        {
+          "beat": 1,
+          "pitches": [
+            81
+          ],
+          "duration": "quarter",
+          "hand": "R"
+        },
+        {
+          "beat": 2,
+          "pitches": [
+            86
+          ],
+          "duration": "quarter",
+          "hand": "R"
+        },
+        {
+          "beat": 3,
+          "pitches": [],
+          "duration": "quarter",
+          "hand": "R"
+        }
+      ],
+      "F": [
+        {
+          "beat": 0,
+          "pitches": [
+            77
+          ],
+          "duration": "quarter",
+          "hand": "L"
+        },
+        {
+          "beat": 1,
+          "pitches": [
+            84
+          ],
+          "duration": "quarter",
+          "hand": "R"
+        },
+        {
+          "beat": 2,
+          "pitches": [
+            89
+          ],
+          "duration": "quarter",
+          "hand": "R"
+        },
+        {
+          "beat": 3,
+          "pitches": [],
+          "duration": "quarter",
+          "hand": "R"
+        }
+      ],
+      "G": [
+        {
+          "beat": 0,
+          "pitches": [
+            79
+          ],
+          "duration": "quarter",
+          "hand": "L"
+        },
+        {
+          "beat": 1,
+          "pitches": [
+            86
+          ],
+          "duration": "quarter",
+          "hand": "R"
+        },
+        {
+          "beat": 2,
+          "pitches": [
+            91
+          ],
+          "duration": "quarter",
+          "hand": "R"
+        },
+        {
+          "beat": 3,
+          "pitches": [],
+          "duration": "quarter",
+          "hand": "R"
         }
       ]
     }
@@ -453,141 +588,6 @@
           "pitches": [
             86
           ],
-          "duration": "quarter",
-          "hand": "R"
-        }
-      ]
-    }
-  },
-  {
-    "id": "crossover",
-    "label": "Crossover Bordun",
-    "isChallenge": false,
-    "keys": {
-      "C": [
-        {
-          "beat": 0,
-          "pitches": [
-            72
-          ],
-          "duration": "quarter",
-          "hand": "L"
-        },
-        {
-          "beat": 1,
-          "pitches": [
-            79
-          ],
-          "duration": "quarter",
-          "hand": "R"
-        },
-        {
-          "beat": 2,
-          "pitches": [
-            84
-          ],
-          "duration": "quarter",
-          "hand": "R"
-        },
-        {
-          "beat": 3,
-          "pitches": [],
-          "duration": "quarter",
-          "hand": "R"
-        }
-      ],
-      "D": [
-        {
-          "beat": 0,
-          "pitches": [
-            74
-          ],
-          "duration": "quarter",
-          "hand": "L"
-        },
-        {
-          "beat": 1,
-          "pitches": [
-            81
-          ],
-          "duration": "quarter",
-          "hand": "R"
-        },
-        {
-          "beat": 2,
-          "pitches": [
-            86
-          ],
-          "duration": "quarter",
-          "hand": "R"
-        },
-        {
-          "beat": 3,
-          "pitches": [],
-          "duration": "quarter",
-          "hand": "R"
-        }
-      ],
-      "F": [
-        {
-          "beat": 0,
-          "pitches": [
-            77
-          ],
-          "duration": "quarter",
-          "hand": "L"
-        },
-        {
-          "beat": 1,
-          "pitches": [
-            84
-          ],
-          "duration": "quarter",
-          "hand": "R"
-        },
-        {
-          "beat": 2,
-          "pitches": [
-            89
-          ],
-          "duration": "quarter",
-          "hand": "R"
-        },
-        {
-          "beat": 3,
-          "pitches": [],
-          "duration": "quarter",
-          "hand": "R"
-        }
-      ],
-      "G": [
-        {
-          "beat": 0,
-          "pitches": [
-            79
-          ],
-          "duration": "quarter",
-          "hand": "L"
-        },
-        {
-          "beat": 1,
-          "pitches": [
-            86
-          ],
-          "duration": "quarter",
-          "hand": "R"
-        },
-        {
-          "beat": 2,
-          "pitches": [
-            91
-          ],
-          "duration": "quarter",
-          "hand": "R"
-        },
-        {
-          "beat": 3,
-          "pitches": [],
           "duration": "quarter",
           "hand": "R"
         }
