@@ -1,0 +1,383 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<museScore version="4.50">
+  <programVersion>4.5.2</programVersion>
+  <programRevision>ac9d3bc</programRevision>
+  <Score>
+    <eid>uP3n4BeNjEH_PZ7g8RxqshN</eid>
+    <Division>480</Division>
+    <showInvisible>1</showInvisible>
+    <showUnprintable>1</showUnprintable>
+    <showFrames>1</showFrames>
+    <showMargins>1</showMargins>
+    <open>1</open>
+    <metaTag name="arranger"></metaTag>
+    <metaTag name="audioComUrl"></metaTag>
+    <metaTag name="composer">Composer / arranger</metaTag>
+    <metaTag name="copyright"></metaTag>
+    <metaTag name="creationDate">2025-07-02</metaTag>
+    <metaTag name="lyricist"></metaTag>
+    <metaTag name="movementNumber"></metaTag>
+    <metaTag name="movementTitle"></metaTag>
+    <metaTag name="platform">Apple Macintosh</metaTag>
+    <metaTag name="source"></metaTag>
+    <metaTag name="sourceRevisionId"></metaTag>
+    <metaTag name="subtitle">Subtitle</metaTag>
+    <metaTag name="translator"></metaTag>
+    <metaTag name="workNumber"></metaTag>
+    <metaTag name="workTitle">Untitled score</metaTag>
+    <Order id="orchestral">
+      <name>Orchestral</name>
+      <instrument id="piano">
+        <family id="keyboards">Keyboards</family>
+        </instrument>
+      <section id="woodwind" brackets="true" barLineSpan="true" thinBrackets="true">
+        <family>flutes</family>
+        <family>oboes</family>
+        <family>clarinets</family>
+        <family>saxophones</family>
+        <family>bassoons</family>
+        <unsorted group="woodwinds"/>
+        </section>
+      <section id="brass" brackets="true" barLineSpan="true" thinBrackets="true">
+        <family>horns</family>
+        <family>trumpets</family>
+        <family>cornets</family>
+        <family>flugelhorns</family>
+        <family>trombones</family>
+        <family>tubas</family>
+        </section>
+      <section id="timpani" brackets="true" barLineSpan="true" thinBrackets="true">
+        <family>timpani</family>
+        </section>
+      <section id="percussion" brackets="true" barLineSpan="true" thinBrackets="true">
+        <family>keyboard-percussion</family>
+        <family>drums</family>
+        <family>unpitched-metal-percussion</family>
+        <family>unpitched-wooden-percussion</family>
+        <family>other-percussion</family>
+        </section>
+      <family>keyboards</family>
+      <family>harps</family>
+      <family>organs</family>
+      <family>synths</family>
+      <soloists/>
+      <section id="voices" brackets="true" barLineSpan="false" thinBrackets="true">
+        <family>voices</family>
+        <family>voice-groups</family>
+        </section>
+      <section id="strings" brackets="true" barLineSpan="true" thinBrackets="true">
+        <family>orchestral-strings</family>
+        </section>
+      <unsorted/>
+      </Order>
+    <Part id="1">
+      <Staff id="1">
+        <StaffType group="pitched">
+          <name>stdNormal</name>
+          </StaffType>
+        <bracket type="1" span="2" col="2" visible="1"/>
+        <barLineSpan>1</barLineSpan>
+        <distOffset>2.25</distOffset>
+        </Staff>
+      <trackName>Piano</trackName>
+      <preferSharpFlat>none</preferSharpFlat>
+      <Instrument id="piano">
+        <longName>Piano</longName>
+        <shortName>Pno.</shortName>
+        <trackName>Piano</trackName>
+        <minPitchP>21</minPitchP>
+        <maxPitchP>108</maxPitchP>
+        <minPitchA>21</minPitchA>
+        <maxPitchA>108</maxPitchA>
+        <instrumentId>keyboard.piano</instrumentId>
+        <clef staff="2">F</clef>
+        <Articulation>
+          <velocity>100</velocity>
+          <gateTime>95</gateTime>
+          </Articulation>
+        <Articulation name="staccatissimo">
+          <velocity>100</velocity>
+          <gateTime>33</gateTime>
+          </Articulation>
+        <Articulation name="staccato">
+          <velocity>100</velocity>
+          <gateTime>50</gateTime>
+          </Articulation>
+        <Articulation name="portato">
+          <velocity>100</velocity>
+          <gateTime>67</gateTime>
+          </Articulation>
+        <Articulation name="tenuto">
+          <velocity>100</velocity>
+          <gateTime>100</gateTime>
+          </Articulation>
+        <Articulation name="marcato">
+          <velocity>120</velocity>
+          <gateTime>67</gateTime>
+          </Articulation>
+        <Articulation name="sforzato">
+          <velocity>150</velocity>
+          <gateTime>100</gateTime>
+          </Articulation>
+        <Articulation name="sforzatoStaccato">
+          <velocity>150</velocity>
+          <gateTime>50</gateTime>
+          </Articulation>
+        <Articulation name="marcatoStaccato">
+          <velocity>120</velocity>
+          <gateTime>50</gateTime>
+          </Articulation>
+        <Articulation name="marcatoTenuto">
+          <velocity>120</velocity>
+          <gateTime>100</gateTime>
+          </Articulation>
+        <Channel>
+          <program value="0"/>
+          <synti>Fluid</synti>
+          </Channel>
+        </Instrument>
+      </Part>
+    <Staff id="1">
+      <VBox>
+        <height>41.7312</height>
+        <boxAutoSize>0</boxAutoSize>
+        <eid>S7ul8TGsJjO_HkYJwqhDERL</eid>
+        <Text>
+          <eid>bFpjn6ihW5G_R3DjV1VMKlL</eid>
+          <style>title</style>
+          <family>Atop</family>
+          <size>51</size>
+          <text><font size="51"/><font face="Atop"/>LEVEL 1:</text>
+          </Text>
+        <Text>
+          <eid>SK501ZKCMpJ_fkmzr6sKf9P</eid>
+          <style>subtitle</style>
+          <family>Chalkboard</family>
+          <size>36</size>
+          <offset x="0" y="25.4546"/>
+          <text><font size="36"/><font face="Chalkboard"/>Good Night, Sleep Tight</text>
+          </Text>
+        <Text>
+          <eid>CAn07ktBQAJ_XbLf68fm8rD</eid>
+          <style>subtitle</style>
+          <family>Chalkboard</family>
+          <size>36</size>
+          <offset x="-1.2201" y="42.536"/>
+          <text><font size="36"/><font face="Chalkboard"/>GE</text>
+          </Text>
+        </VBox>
+      <Measure>
+        <eid>P+ud1qGjMXB_EcP95C7KFGN</eid>
+        <voice>
+          <KeySig>
+            <eid>iqNjXs9bk6D_lIhVzS3LAkE</eid>
+            <concertKey>0</concertKey>
+            </KeySig>
+          <TimeSig>
+            <eid>qP+wqBtJU5E_CQW9j62kn/</eid>
+            <sigN>4</sigN>
+            <sigD>4</sigD>
+            </TimeSig>
+          <Chord>
+            <eid>0qy/vzFlDrN_jqLsgRon77M</eid>
+            <durationType>quarter</durationType>
+            <Lyrics>
+              <syllabic>begin</syllabic>
+              <eid>XW04Qs8VPzE_W5qOzuDWvLP</eid>
+              <size>6</size>
+              <text><font size="6"/>Good</text>
+              </Lyrics>
+            <Note>
+              <eid>w6iuQMQlCpM_+VqCtlvUCzP</eid>
+              <color r="0" g="156" b="149" a="255"/>
+              <pitch>67</pitch>
+              <tpc>15</tpc>
+              <small>1</small>
+              <headScheme>name-pitch</headScheme>
+              </Note>
+            </Chord>
+          <Chord>
+            <eid>swcyPDHBdqJ_Xl8O/TFto7</eid>
+            <durationType>quarter</durationType>
+            <Lyrics>
+              <syllabic>end</syllabic>
+              <eid>4j0NfYqfN2F_ejOhJfTPWe</eid>
+              <size>6</size>
+              <text><font size="6"/>night,</text>
+              </Lyrics>
+            <Note>
+              <eid>GHKgQyjD65G_Aun18zHEdKC</eid>
+              <color r="255" g="243" b="43" a="255"/>
+              <pitch>64</pitch>
+              <tpc>18</tpc>
+              <small>1</small>
+              <headScheme>name-pitch</headScheme>
+              </Note>
+            </Chord>
+          <Chord>
+            <eid>41OtDcowttE_a0L8SC/6xNJ</eid>
+            <durationType>quarter</durationType>
+            <Lyrics>
+              <eid>aUubYfMSRNH_K9cmjdN6MhI</eid>
+              <size>6</size>
+              <text><font size="6"/>sleep</text>
+              </Lyrics>
+            <Note>
+              <eid>rdWMk/40GRI_iE8EWi9S19G</eid>
+              <color r="0" g="156" b="149" a="255"/>
+              <pitch>67</pitch>
+              <tpc>15</tpc>
+              <small>1</small>
+              <headScheme>name-pitch</headScheme>
+              </Note>
+            </Chord>
+          <Chord>
+            <eid>Vv2s0dYgkPF_BQ+jI27gZNE</eid>
+            <durationType>quarter</durationType>
+            <Lyrics>
+              <eid>Wq3Zs3Ax97L_Y0E1KrzJ+QK</eid>
+              <size>6</size>
+              <text><font size="6"/>tight,</text>
+              </Lyrics>
+            <Note>
+              <eid>J4/5GKep02L_9HCtLtM6zMB</eid>
+              <color r="255" g="243" b="43" a="255"/>
+              <pitch>64</pitch>
+              <tpc>18</tpc>
+              <small>1</small>
+              <headScheme>name-pitch</headScheme>
+              </Note>
+            </Chord>
+          </voice>
+        </Measure>
+      <Measure>
+        <eid>w+ekQFC5ebO_KYc6AZygfcP</eid>
+        <voice>
+          <Chord>
+            <eid>2HQN4P0OXuF_ec/zocJWRhM</eid>
+            <durationType>eighth</durationType>
+            <Lyrics>
+              <eid>RMrOkbEsIcM_2QCvBg9COQI</eid>
+              <size>6</size>
+              <text><font size="6"/>friends</text>
+              </Lyrics>
+            <Note>
+              <eid>NYwadvdKBeB_sFMMDws5MWG</eid>
+              <color r="0" g="156" b="149" a="255"/>
+              <pitch>67</pitch>
+              <tpc>15</tpc>
+              <small>1</small>
+              <headScheme>name-pitch</headScheme>
+              </Note>
+            </Chord>
+          <Chord>
+            <eid>sP+cr4ySsmE_wKzyLJdEJjK</eid>
+            <durationType>eighth</durationType>
+            <Lyrics>
+              <eid>kOwWXNApjcK_w4x24nMUo5</eid>
+              <size>6</size>
+              <text><font size="6"/>will</text>
+              </Lyrics>
+            <Note>
+              <eid>A7Halm+zEZN_Av6nVJhqwRN</eid>
+              <color r="0" g="156" b="149" a="255"/>
+              <pitch>67</pitch>
+              <tpc>15</tpc>
+              <small>1</small>
+              <headScheme>name-pitch</headScheme>
+              </Note>
+            </Chord>
+          <Chord>
+            <eid>vIGSU+CNiXH_pbN5Q/07JjE</eid>
+            <BeamMode>begin</BeamMode>
+            <durationType>eighth</durationType>
+            <Lyrics>
+              <eid>BVfGJCa34i_YW8HYnlfjOH</eid>
+              <size>6</size>
+              <text><font size="6"/>come</text>
+              </Lyrics>
+            <Note>
+              <eid>3050KlgpjYC_HcRmsdLf3oE</eid>
+              <color r="255" g="243" b="43" a="255"/>
+              <pitch>64</pitch>
+              <tpc>18</tpc>
+              <small>1</small>
+              <headScheme>name-pitch</headScheme>
+              </Note>
+            </Chord>
+          <Chord>
+            <eid>QcPSptoPs_uscvKvPmwNP</eid>
+            <durationType>eighth</durationType>
+            <Lyrics>
+              <syllabic>begin</syllabic>
+              <eid>t/XwQ24PZ9M_KuZ2Aocs2UB</eid>
+              <size>6</size>
+              <text><font size="6"/>to</text>
+              </Lyrics>
+            <Note>
+              <eid>9ZQJMtYZx1B_yoDSh6H503I</eid>
+              <color r="255" g="243" b="43" a="255"/>
+              <pitch>64</pitch>
+              <tpc>18</tpc>
+              <small>1</small>
+              <headScheme>name-pitch</headScheme>
+              </Note>
+            </Chord>
+          <Chord>
+            <eid>FGe3mjBExkK_GYZMY+U6SMJ</eid>
+            <durationType>eighth</durationType>
+            <Lyrics>
+              <syllabic>middle</syllabic>
+              <eid>O1My+Ci0CGE_QXtZFt5LtSO</eid>
+              <size>6</size>
+              <text><font size="6"/>mor</text>
+              </Lyrics>
+            <Note>
+              <eid>XMlD5LQUHGG_8NeufY7JBqG</eid>
+              <color r="0" g="156" b="149" a="255"/>
+              <pitch>67</pitch>
+              <tpc>15</tpc>
+              <small>1</small>
+              <headScheme>name-pitch</headScheme>
+              </Note>
+            </Chord>
+          <Chord>
+            <eid>whYSoA5Rl0N_vKEPgmUqVFE</eid>
+            <durationType>eighth</durationType>
+            <Lyrics>
+              <syllabic>end</syllabic>
+              <eid>l6uoNk6DfGP_B6xV/eqforM</eid>
+              <size>6</size>
+              <text><font size="6"/>row</text>
+              </Lyrics>
+            <Note>
+              <eid>5L6c43O08hG_lZmiF5jxUiM</eid>
+              <color r="0" g="156" b="149" a="255"/>
+              <pitch>67</pitch>
+              <tpc>15</tpc>
+              <small>1</small>
+              <headScheme>name-pitch</headScheme>
+              </Note>
+            </Chord>
+          <Chord>
+            <eid>HfNaet2EI4P_OzzZAO4H74I</eid>
+            <durationType>quarter</durationType>
+            <Lyrics>
+              <eid>KpBY9vpNG4_1ftHgz7YskH</eid>
+              <size>6</size>
+              <text><font size="6"/>night!</text>
+              </Lyrics>
+            <Note>
+              <eid>L44WUWKmf5G_zLMatH+711B</eid>
+              <color r="255" g="243" b="43" a="255"/>
+              <pitch>64</pitch>
+              <tpc>18</tpc>
+              <small>1</small>
+              <headScheme>name-pitch</headScheme>
+              </Note>
+            </Chord>
+          </voice>
+        </Measure>
+      </Staff>
+    </Score>
+  </museScore>
