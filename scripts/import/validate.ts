@@ -34,9 +34,9 @@ const FORBIDDEN_ELEMENTS = [
 /**
  * Observed corpus range is MIDI 60-98: melodies sit at 60-79 (C4-G5), and the written
  * borduns (transposed up for the D/F/G keys, before the -24 semitone playback shift)
- * reach as high as 98 (D7). C3-C8 gives roughly an octave of headroom on each side —
- * enough for legitimate future keys/patterns without being so wide it stops catching a
- * mistyped octave or garbage pitch value.
+ * reach as high as 98 (D7). C3-C8 (48-108) gives a clean octave of headroom below and
+ * most of one above — enough for legitimate future keys/patterns without being so wide
+ * it stops catching a mistyped octave or garbage pitch value.
  */
 const MIN_PITCH = 48 // C3
 const MAX_PITCH = 108 // C8
