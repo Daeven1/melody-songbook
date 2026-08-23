@@ -118,4 +118,63 @@ describe('barsFromMeasures — rejects unverifiable data', () => {
     `)
     expect(() => barsFromMeasures([measure])).toThrow('<no> is not a valid lyric line number')
   })
+
+  it('throws when a lyric occupies a line above 0 with nothing on line 0', () => {
+    const measure = measureFromVoiceXml(`
+      <Chord>
+        <durationType>quarter</durationType>
+        <Note>
+          <pitch>67</pitch>
+          <tpc>15</tpc>
+        </Note>
+        <Lyrics>
+          <no>1</no>
+          <text>orphan</text>
+        </Lyrics>
+      </Chord>
+    `)
+    expect(() => barsFromMeasures([measure])).toThrow(
+      'A note has a lyric on a line above 0 but nothing on line 0',
+    )
+  })
+})
+
+describe('barsFromMeasures — compacts lyric lines', () => {
+  it('drops a gap between occupied lines instead of filling it with a blank syllable', () => {
+    // Mirrors the real au-clair-de-la-lune data: line 0 and line 2 are used, line 1 is
+    // not — the note's lyrics array must be dense, ['Au', 'At'], not ['Au', '', 'At'].
+    const measure = measureFromVoiceXml(`
+      <Chord>
+        <durationType>quarter</durationType>
+        <Note>
+          <pitch>60</pitch>
+          <tpc>14</tpc>
+        </Note>
+        <Lyrics>
+          <no>0</no>
+          <text>Au</text>
+        </Lyrics>
+        <Lyrics>
+          <no>2</no>
+          <text>At</text>
+        </Lyrics>
+      </Chord>
+    `)
+    const notes = barsFromMeasures([measure]).flatMap(b => b.notes)
+    expect(notes[0]!.lyrics).toEqual([
+      { text: 'Au', syllabic: 'single' },
+      { text: 'At', syllabic: 'single' },
+    ])
+  })
+})
+
+describe('barsFromMeasures — au-clair-de-la-lune (regression for the lost second lyric line)', () => {
+  it('reads the note tagged <no>2</no> as the second lyric, not a lost third one', () => {
+    const AU_CLAIR = 'source/G2 Melodies Level 2 (Au Clair de la Lune).mscz'
+    const notes = firstSectionBars(AU_CLAIR).flatMap(b => b.notes)
+    expect(notes[0]!.lyrics).toEqual([
+      { text: 'Au', syllabic: 'single' },
+      { text: 'At', syllabic: 'single' },
+    ])
+  })
 })

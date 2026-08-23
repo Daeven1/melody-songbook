@@ -91,6 +91,18 @@ function readLyrics(chord: Element): LyricSyllable[] {
       syllabic: syllabic as LyricSyllable['syllabic'],
     }
   }
-  // Fill any gap so consumers can index lines without holes.
-  return Array.from(byLine, line => line ?? { text: '', syllabic: 'single' as const })
+  // A stray <no> (e.g. an English syllable mistagged 2 instead of 1) leaves a hole at a
+  // lower index. If line 0 itself is the hole, compacting below would slide a genuine
+  // second-verse syllable up onto line 0 — indistinguishable from data loss — so that
+  // case is rejected rather than silently remapped. Verified empirically: no note in the
+  // corpus hits this today.
+  if (byLine.length > 0 && byLine[0] === undefined) {
+    throw new Error(
+      'A note has a lyric on a line above 0 but nothing on line 0; compacting would ' +
+      'silently move that lyric onto line 0',
+    )
+  }
+  // Compact: drop any hole (an unused line index) rather than filling it with a blank
+  // syllable, so `lyrics` is dense and consumers can index 0, 1, 2, ... without gaps.
+  return byLine.filter((line): line is LyricSyllable => line !== undefined)
 }
