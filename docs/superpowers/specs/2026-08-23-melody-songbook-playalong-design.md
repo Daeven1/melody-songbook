@@ -4,6 +4,9 @@
 **Status:** Approved design, ready for implementation planning
 **Author:** David Rempel (concept by Lacie)
 
+> Revised 2026-08-23 after analysing the full MuseScore corpus. The corpus contradicted
+> two assumptions in the first draft; both are corrected below and marked **[corpus]**.
+
 ---
 
 ## Purpose
@@ -40,30 +43,112 @@ This is **not** a general music app. Every decision follows the songbook.
 
 ## Source material
 
-78-page PDF, containing two songbooks (Levels 1–2, Levels 3–4). Structure is
-2 cover pages + 76 song pages = **19 songs × 4 keys**.
+`reference/` holds the 78-page PDF: 2 cover pages + 76 song pages = **19 songs × 4 keys**.
+The PDF has **no text layer** — every page is a flat image. It is a visual reference only;
+no data is extracted from it.
 
-The PDF has **no text layer** — every page is a flat image. It is a reference for
-appearance only; no data is extracted from it.
+`source/` holds 21 MuseScore files the importer reads: **19 song files + 2 bordun files**.
+`source/_superseded/` holds three redundant copies of *Good Night, Sleep Tight* and is ignored.
 
-MuseScore sources exist for all songs **and** for the borduns.
+### Corpus facts (verified across all 21 files, ~2,000 notes)
 
-### What the MuseScore files contain
+| Property | Finding |
+|---|---|
+| MuseScore version | 4.50 throughout |
+| Staves / parts | Exactly 1 of each per file — melody is monophonic |
+| Time signature | 4/4 everywhere, no exceptions |
+| Key signature | `concertKey 0` everywhere, **including the D and G versions** |
+| Durations used | half, quarter, eighth — nothing else |
+| Ties, dots, slurs, repeats, voltas | **None anywhere in the corpus** |
+| Layout breaks | Present in 22 files — used as section and line delimiters |
 
-Verified by unzipping `Melodies Level 1 (Goodnight, Sleep Tight).mscz` (MuseScore 4.5.2)
-and parsing the `.mscx` inside:
+The restricted rhythm vocabulary is a significant de-risking: the notation renderer never
+has to handle a tie, a dot, or a repeat structure. **The importer must reject** any future
+file that introduces one, rather than silently mis-rendering it.
 
-- MIDI pitch per note (`<pitch>`) and tonal pitch class (`<tpc>`, giving spelling)
-- Duration (`<durationType>`)
-- Lyric syllable with `<syllabic>` position
-- **Note colour** — e.g. G is `rgb(0,156,149)`, E is `rgb(255,243,43)`
-- `<headScheme>name-pitch</headScheme>` — the letter-in-notehead scheme
-- Title, subtitle, key label, time signature, key signature
+### **[corpus]** Each file already contains all four keys
 
-### What they do NOT contain
+The first draft assumed one key per file with the other three generated. That is wrong.
+Each `.mscz` is a repeating structure: title frame → bars → `page` layout break, four times.
 
-- The coloured phrase boxes (A/B sections) — added in Word
-- The five borduns as part of a song page — they exist as their own files
+Verified on *Good Night, Sleep Tight*:
+
+| Section | Pitches | Key |
+|---|---|---|
+| 1 | G4 E4 | C |
+| 2 | A4 F♯4 | D (+2) |
+| 3 | C5 A4 | F (+5) |
+| 4 | D5 B4 | G (+7) |
+
+The authored intervals are exactly +2 / +5 / +7, matching the rules in the first draft.
+
+**Consequence: there is no runtime transposition.** All four keys are imported as authored.
+This removes an entire runtime subsystem and eliminates any risk of the app disagreeing with
+the printed book.
+
+The transposition rules survive as a **validation test** instead — see Testing.
+
+### **[corpus]** No key signatures already
+
+Every file, in every key, has `concertKey 0`. MuseScore is already placing accidentals
+inline rather than at the clef. The "no key signature" requirement therefore matches how
+Lacie authors; it is not a change.
+
+The one genuine departure remains: **the sign is redrawn on every note that needs it.**
+The printed book follows standard convention — in *Bow, Wow, Wow!* it draws one sharp and
+leaves the following three F♯s bare. The app draws all four, so a student reading note by
+note never has to carry a sign forward from earlier in the bar.
+
+### Colour table (verified, zero conflicts)
+
+Every pitch class resolves to exactly one colour across the whole corpus. No file disagrees
+with another. This is now fixed data rather than something to harvest defensively — though
+the importer should still assert it, so a future edit that breaks it fails the build.
+
+| Pitch | RGB | Pitch | RGB |
+|---|---|---|---|
+| C | `226, 28, 72` | F♯ | `98, 188, 71` |
+| D | `249, 157, 28` | G | `0, 156, 149` |
+| E | `255, 243, 43` | A | `94, 80, 161` |
+| F | `188, 216, 95` | B♭ | `141, 91, 166` |
+| | | B | `207, 62, 150` |
+
+B♭ appears only in the excluded bordun extras (below), so the app never renders it.
+The table records it for completeness.
+
+### Borduns
+
+Both bordun files contain the same five patterns × four keys.
+
+`G2 - Bordun Techniques & No Lyrics.mscz` is **canonical**: exactly 20 bars, 5 × 4, nothing else.
+
+`G2 - Bordun Techniques.mscz` adds four bars — Chord and Broken in **B♭ and A** — which do not
+appear in the songbook. **Excluded**, pending a decision to add those keys.
+
+The five patterns, in the key of C, as written:
+
+| Pattern | Bar contents |
+|---|---|
+| Chord | half C5+G5, half C5+G5 |
+| Broken | quarter C5, G5, C5, G5 |
+| Levels | half C5+G5, half C6+G6 |
+| Crossover | quarter C5, G5, C6, rest |
+| Crossover *CHALLENGE* | quarter C5, G5, C6, G5 |
+
+**The file stores these in a different order than the page prints them** (file: Levels, Broken,
+Chord, Crossover-Challenge, Crossover; page: Chord, Broken, Levels, Crossover, Crossover-Challenge).
+The importer must key patterns **by title text, never by position.**
+
+#### Bordun playback octave
+
+As written, the C bordun is C5+G5 while the C melody sits at E4–G4 — the accompaniment
+would sound *above* the tune, which is backwards for a drone.
+
+**Decision: bordun plays two octaves below written pitch**, the bass xylophone sound, matching
+what a bass player in the room actually produces (bass xylophones sound an octave below written).
+
+**Notation and the bordun instrument still display exactly as written.** The shift is applied at
+playback only, and lives in the schedule builder — one constant, one place.
 
 ---
 
@@ -73,20 +158,27 @@ Two clearly separated halves.
 
 ### 1. Import (build-time, never in the browser)
 
-A script reads `.mscz` files, parses the `.mscx` XML inside, and emits committed JSON.
+A script reads `source/*.mscz`, parses the `.mscx` XML inside, and emits committed JSON.
 The running app never parses a MuseScore file.
 
 Rationale: songs load instantly, and a MuseScore version bump can only ever break a
 script we re-run offline — never a lesson in progress.
 
 The importer:
-- Extracts title, level, time signature, notes, durations, lyrics, spelling
+
+- Splits each song file on `page` layout breaks into its four key sections
+- Extracts title, level, time signature, notes, durations, lyrics, and spelling (`tpc`)
 - Reads a tempo marking where MuseScore has one, falling back to 100 BPM
-- **Harvests the colour table from the files themselves** rather than hand-typing a
-  Boomwhacker palette, and errors if two files disagree about a pitch's colour
-- Reads MuseScore `<LayoutBreak>` elements to preserve the book's line breaks
-- Refuses to emit anything it cannot verify: bars that do not sum to the time
-  signature, unknown durations, pitches outside the instrument range
+- Preserves line breaks from the remaining layout breaks
+- Keys bordun patterns by title text, not position
+- **Asserts the colour table** — fails the build if a note's colour contradicts it
+- **Rejects anything outside the verified vocabulary**: a time signature other than 4/4,
+  a duration other than half/quarter/eighth, any tie/dot/slur/repeat, more than one staff,
+  a section count other than 4, bars that don't sum to the time signature, or a pitch
+  outside the instrument range
+
+Every one of those checks exists because the corpus currently satisfies it. They are
+regression guards on future edits, not speculative validation.
 
 ### 2. Runtime (browser)
 
@@ -100,8 +192,8 @@ Not Next.js: no server, no database, no auth. Next would be weight without benef
 ## Data model
 
 ```ts
-type Duration = 'whole' | 'half' | 'quarter' | 'eighth' | 'sixteenth'
-type KeyName = 'C' | 'D' | 'F' | 'G'
+type Duration = 'half' | 'quarter' | 'eighth'
+type KeyName  = 'C' | 'D' | 'F' | 'G'
 
 interface LyricSyllable {
   text: string
@@ -112,8 +204,13 @@ interface Note {
   pitch: number | null        // MIDI number; null = rest
   tpc: number                 // tonal pitch class — determines spelling (F# not Gb)
   duration: Duration
-  dotted: boolean
   lyrics: LyricSyllable[]     // index = lyric line; [0] main, [1] pinyin
+}
+
+interface KeyVersion {
+  label: string               // 'GE', 'AF#' — derived from the pitch set, not stored by hand
+  notes: Note[]
+  systemBreaks: number[]      // bar indices where a new line starts
 }
 
 interface Song {
@@ -121,74 +218,38 @@ interface Song {
   title: string
   titleAlt?: string           // e.g. 茉莉花
   level: 1 | 2 | 3 | 4
-  timeSignature: [number, number]
-  sourceKey: KeyName          // the key the MuseScore file is written in
-  notes: Note[]
+  timeSignature: [4, 4]
+  keys: Record<KeyName, KeyVersion>
   phrases: string[]           // e.g. ['A','B'] — one letter per phrase box
   phraseGrouping?: number[]   // bars per box; defaults to all 1s (one box per bar).
-                              // Must be same length as `phrases`, and must sum to
-                              // the song's bar count. Mò Lì Huā is [2,2,2,2].
-  systemBreaks?: number[]     // bar indices where a new line starts
+                              // Same length as `phrases`; must sum to the bar count.
+                              // Mò Lì Huā is [2,2,2,2].
   defaultTempo: number
 }
-```
 
-### Keys and transposition
-
-Only the source key is stored. The other three are generated:
-
-| Target | Semitones | TPC shift |
-|---|---|---|
-| C → D | +2 | +2 |
-| C → F | +5 | −1 |
-| C → G | +7 | +1 |
-
-The TPC shift is what guarantees correct spelling — the D-key version yields **F♯**,
-never G♭.
-
-Verified against the book's own page titles:
-
-- `G E` → `A F♯` / `C A` / `D B` — matches the *Good Night, Sleep Tight* pages
-- `C D E G A` → `D E F♯ A B` / `F G A C D` / `G A B D E` — matches the *Mò Lì Huā* pages
-
-Because it round-trips exactly, **the "GE" / "AF♯" subtitle is derived from the pitch
-set, not stored.**
-
-### Accidentals
-
-**Decision: no key signature; every note that needs an accidental gets one, every time.**
-
-The key signature is always empty. VexFlow's automatic accidental logic is switched
-off and accidentals are placed explicitly per note.
-
-This is a **deliberate departure from the printed book**. In *Bow, Wow, Wow!* the
-current page draws one sharp and leaves the following three F♯s bare, per standard
-convention. The app draws all four. This favours a student reading note by note, who
-should never have to remember a sign from earlier in the bar.
-
-### Borduns
-
-Five fixed one-bar patterns — Chord, Broken, Levels, Crossover, Crossover Challenge —
-identical on every page of the book, varying only by key. Defined once, transposed
-by the same rules as melodies, looped under the song.
-
-Each bordun event carries a **hand assignment**, because the five borduns are hand-technique
-lessons: chord is both hands together, broken alternates, crossover crosses one hand over.
-
-```ts
 interface BordunEvent {
   beat: number
-  pitches: number[]           // usually tonic + fifth
+  pitches: number[]           // as written; playback shifts down 24 semitones
   duration: Duration
   hand: 'L' | 'R' | 'both'
 }
+
+interface Bordun {
+  id: 'chord' | 'broken' | 'levels' | 'crossover' | 'crossover-challenge'
+  label: string
+  isChallenge: boolean
+  keys: Record<KeyName, BordunEvent[]>   // one bar per key, looped
+}
 ```
+
+Key labels ("GE", "AF♯") are derived from each version's pitch set rather than stored,
+and are verified against the book's page titles in testing.
 
 ---
 
 ## Screen
 
-Three stacked zones filling the viewport. Nothing scrolls.
+Three stacked zones filling the viewport, plus a control bar. Nothing scrolls.
 
 ```
 ┌─────────────────────────────────────────────┐
@@ -207,9 +268,9 @@ Three stacked zones filling the viewport. Nothing scrolls.
 └─────────────────────────────────────────────┘
 ```
 
-Whole song visible at once. Only the cursor and highlights move. Justified by the fact
-that no song in the book exceeds 8 bars, and by the teaching goal — students can see
-the whole phrase structure, which is the point of the coloured boxes.
+Whole song visible at once. Only the cursor and highlights move. Justified by the corpus —
+the longest songs are 8 bars — and by the teaching goal: students can see the whole phrase
+structure, which is the point of the coloured boxes.
 
 ### Notation rendering
 
@@ -220,6 +281,8 @@ Drawn by us on top, using coordinates VexFlow reports:
 
 - **Noteheads** — VexFlow's defaults suppressed, replaced with a filled coloured circle
   carrying the pitch letter. This is the book's visual signature and appears on every note.
+- **Accidentals** — placed explicitly per note, with VexFlow's automatic accidental logic
+  switched off and the key signature forced empty.
 - **Lyrics** — our own text layer, not VexFlow annotations, because *Mò Lì Huā* needs two
   stacked lines (Chinese + pinyin) and note x-positions are already known.
 - **Phrase boxes** — rounded rectangles from first to last note of each phrase, coloured
@@ -231,12 +294,13 @@ Drawn by us on top, using coordinates VexFlow reports:
 
 SVG, drawn from the student's viewpoint (low notes left).
 
-Full diatonic row with **F♯ and B♭ raised above as separate bars**, mirroring the removable
-chromatic bars on a real Orff instrument. Bars outside the current key's pentatonic are
-**dimmed** — the on-screen equivalent of physically taking bars off.
+Full diatonic row with **F♯ raised above as a separate bar**, mirroring the removable
+chromatic bar on a real Orff instrument. (B♭ is never needed — it appears only in the
+excluded bordun extras.) Bars outside the current key's pentatonic are **dimmed** — the
+on-screen equivalent of physically taking bars off.
 
 Two mallets per instrument, animating to strike bar centres. The bordun instrument uses
-the real hand assignment from the pattern; the melody instrument alternates, which is the
+the hand assignment from the pattern; the melody instrument alternates, which is the
 standard sticking to teach anyway.
 
 ---
@@ -259,7 +323,8 @@ Getting this backwards produces a subtly-wrong feel that is miserable to debug l
 ```
 
 This is the decision that makes timing testable — exact event times can be asserted with
-no audio context, no speaker, and no flaky timing test.
+no audio context, no speaker, and no flaky timing test. The bordun's −24 semitone playback
+shift is applied here.
 
 **Playback:** four metronome beats of count-in at the set tempo, then the song plays a
 selectable number of times — **1** (default), 2, 4, 8, or continuous until stopped.
@@ -291,14 +356,16 @@ without a browser or a speaker.
 
 | Area | Test |
 |---|---|
-| Importer | Golden test: `tests/fixtures/goodnight-sleep-tight.mscx` must yield exactly 11 notes; pitches `67,64,67,64,67,67,64,64,67,67,64`; durations quarter×4, eighth×6, quarter; lyrics as 11 separate syllables — `Good` `night,` `sleep` `tight,` `friends` `will` `come` `to` `mor` `row` `night!` — with `to/mor/row` carrying syllabic begin/middle/end |
-| Transposition | Every song in every key produces the note set named in the book's own page titles; F♯ is spelled as a sharpened F |
-| Validation | Every song's bars sum to its time signature |
-| Schedule builder | Exact-event assertions for given song/tempo/repeats |
+| Importer golden test | `tests/fixtures/goodnight-sleep-tight.mscx` yields exactly 11 notes; pitches `67,64,67,64,67,67,64,64,67,67,64`; durations quarter×4, eighth×6, quarter; lyrics as 11 separate syllables — `Good` `night,` `sleep` `tight,` `friends` `will` `come` `to` `mor` `row` `night!` — with `to/mor/row` carrying syllabic begin/middle/end |
+| **Transposition as validation** | For every song, generating keys 2–4 from key 1 by +2/+5/+7 (with TPC shifts +2/−1/+1) must reproduce the **authored** notes exactly. This proves the imported data is internally consistent and that no section was mis-split. |
+| Key labels | Each version's derived label matches the book's page title — `GE`/`AF♯`/`CA`/`DB`, `CDEGA`/`DEF♯AB`/`FGACD`/`GABDE` |
+| Spelling | F♯ is spelled as a sharpened F, never G♭ |
+| Corpus invariants | Every file: 4/4, one staff, four sections, bars summing to the time signature, durations within the allowed set, colours matching the table |
+| Schedule builder | Exact-event assertions for given song/tempo/repeats, including the bordun octave shift |
 | Rendering | SVG snapshots for a representative song per level |
 
-The golden test values were read directly out of Lacie's file, so they are observed
-facts rather than expectations.
+The golden-test values and every corpus invariant were read directly out of Lacie's files,
+so they are observed facts rather than expectations.
 
 ---
 
@@ -319,6 +386,9 @@ accept slightly different titles.
 
 ## Content authoring still required
 
-- Phrase letter sequences for all 19 songs (small — e.g. `A B` for *Good Night*,
-  `A B C B` for *Frog in the Meadow*, `A A B C` for *Mò Lì Huā*)
-- The remaining `.mscz` source files, for songs and borduns, dropped into `source/`
+Both are small and one-time.
+
+- **Phrase letter sequences for all 19 songs** — e.g. `A B` for *Good Night*,
+  `A B C B` for *Frog in the Meadow*, `A A B C` for *Mò Lì Huā*. Read off the PDF.
+- **Hand assignments for the 5 bordun patterns** — not present in the MuseScore files.
+  Chord and Levels are both hands; Broken alternates; the two Crossovers cross one hand over.
