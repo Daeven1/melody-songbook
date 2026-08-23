@@ -5,6 +5,9 @@ import { systemBreaksFor } from '../../scripts/import/systems'
 const GOODNIGHT = 'source/G2 Melodies Level 1 (Goodnight, Sleep Tight).mscz'
 const OLD_MACDONALD = 'source/G2 Melodies Level 3 (Old Macdonald).mscz'
 const MO_LI_HUA = 'source/G2 Melodies Level 4 (Mo Lie Hua).mscz'
+const FROG = 'source/G2 Melodies Level 1 (Frog in the Meadow).mscz'
+const AU_CLAIR = 'source/G2 Melodies Level 2 (Au Clair de la Lune).mscz'
+const CLOSET_KEY = 'source/G2 Melodies Level 2 (Closet Key).mscz'
 
 describe('systemBreaksFor', () => {
   it('keeps a two-bar song on one line', () => {
@@ -72,5 +75,13 @@ describe('buildSong', () => {
     expect(firstPitch('D')).toBe(69)
     expect(firstPitch('F')).toBe(72)
     expect(firstPitch('G')).toBe(74)
+  })
+
+  it('identifies the key label by content, not position, when a frame stores title and label in the opposite order', () => {
+    // These three frames store their texts as [label, title] instead of the usual
+    // [title, label] — the label must still be found correctly by pattern match.
+    expect(buildSong(FROG).keys.G.label).toBe('DB')
+    expect(buildSong(AU_CLAIR).keys.G.label).toBe('GAB')
+    expect(buildSong(CLOSET_KEY).keys.F.label).toBe('FGA')
   })
 })
