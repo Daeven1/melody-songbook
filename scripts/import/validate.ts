@@ -24,7 +24,22 @@ export function bordunFile(): string {
 }
 
 /** Elements the renderer cannot draw. None appear in the corpus today. */
-const FORBIDDEN_ELEMENTS = ['Tie', 'Slur', 'Volta', 'Jump', 'Marker', 'Tuplet', 'dots']
+const FORBIDDEN_ELEMENTS = [
+  'Tie', 'Slur', 'Volta', 'Jump', 'Marker', 'Tuplet', 'dots',
+  // MuseScore 4 stores an actual repeat barline as one of these — the renderer has no
+  // repeat structure, and unlike a missing dot, the bar-sum check does not catch one.
+  'startRepeat', 'endRepeat',
+]
+
+/**
+ * Observed corpus range is MIDI 60-98: melodies sit at 60-79 (C4-G5), and the written
+ * borduns (transposed up for the D/F/G keys, before the -24 semitone playback shift)
+ * reach as high as 98 (D7). C3-C8 gives roughly an octave of headroom on each side —
+ * enough for legitimate future keys/patterns without being so wide it stops catching a
+ * mistyped octave or garbage pitch value.
+ */
+const MIN_PITCH = 48 // C3
+const MAX_PITCH = 108 // C8
 
 export function validateDocument(doc: Document, label: string): void {
   const score = firstChildNamed(doc.documentElement, 'Score')
@@ -51,6 +66,11 @@ export function validateDocument(doc: Document, label: string): void {
   for (let i = 0; i < notes.length; i++) {
     const note = notes[i] as unknown as Element
     const pitch = Number(textOf(note, 'pitch'))
+    if (pitch < MIN_PITCH || pitch > MAX_PITCH) {
+      throw new Error(
+        `${label}: pitch ${pitch} is outside the instrument range (${MIN_PITCH}-${MAX_PITCH})`,
+      )
+    }
     const colour = firstChildNamed(note, 'color')
     if (!colour) throw new Error(`${label}: a note has no <color>`)
     const actual = [
