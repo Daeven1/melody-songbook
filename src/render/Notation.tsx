@@ -215,6 +215,10 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
         const start = noteCursor
         bar.notes.forEach(note => {
           const staveNote = new StaveNote({ keys: [vexKey(note)], duration: vexDuration(note) })
+          // A note computes its Y positions when IT is given a stave — not when
+          // the voice is. The stem-length pass below reads those positions, so
+          // assign the stave here rather than leaving it to voice.draw().
+          staveNote.setStave(stave)
           if (note.tpc !== null) {
             const symbol = accidentalSymbol(note.tpc)
             if (symbol) staveNote.addModifier(new Accidental(symbol), 0)

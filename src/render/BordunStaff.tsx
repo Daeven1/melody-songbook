@@ -114,6 +114,9 @@ export function BordunStaff({ bordun, keyName, litPitches, label }: BordunStaffP
     // originals' formatting state.
     const drawNotes = events.map(event => {
       const { staveNote, sorted, isRest } = buildStaveNote(event)
+      // Same reason as Notation.tsx: a note needs its stave before anything
+      // reads or sets stem geometry on it.
+      staveNote.setStave(stave)
       if (!isRest) {
         sorted.forEach((_, i) => staveNote.setKeyStyle(i, { fillStyle: 'transparent', strokeStyle: 'transparent' }))
       }
