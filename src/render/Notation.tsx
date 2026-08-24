@@ -5,7 +5,7 @@ import { splitIntoSystems } from './systems'
 import { vexDuration, vexKey } from './vexNotes'
 import { accidentalSymbol, noteLetter } from '../music/pitch'
 import { colourForPitch, rgbToCss } from '../music/colours'
-import { textColourForFill } from './noteheads'
+import { noteheadLabel, textColourForFill } from './noteheads'
 import { colourForLetter, hexToRgba } from './phraseColours'
 import { phraseBoxSpans, splitPhraseBoxesBySystem } from './phraseBoxes'
 import { lyricText } from './lyrics'
@@ -159,7 +159,7 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
             y: staveNote.getYs()[0] ?? systemTop,
             fill: rgbToCss(rgb),
             textColour: textColourForFill(rgb),
-            letter: noteLetter(originalNote.tpc),
+            letter: noteheadLabel(originalNote.tpc),
           })
         }
 

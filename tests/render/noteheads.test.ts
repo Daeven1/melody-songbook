@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { PITCH_COLOURS } from '../../src/music/colours'
-import { relativeLuminance, textColourForFill } from '../../src/render/noteheads'
+import { relativeLuminance, textColourForFill, noteheadLabel } from '../../src/render/noteheads'
 
 describe('relativeLuminance', () => {
   it('is 0 for black and 1 for white', () => {
@@ -35,5 +35,13 @@ describe('textColourForFill', () => {
     for (const rgb of Object.values(PITCH_COLOURS)) {
       expect(['#000000', '#ffffff']).toContain(textColourForFill(rgb))
     }
+  })
+})
+
+describe('noteheadLabel', () => {
+  it('carries the accidental inside the notehead, as the book draws it', () => {
+    expect(noteheadLabel(15)).toBe('G')      // G natural
+    expect(noteheadLabel(20)).toBe('F♯')     // F sharp
+    expect(noteheadLabel(12)).toBe('B♭')     // B flat
   })
 })

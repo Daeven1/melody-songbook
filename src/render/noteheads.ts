@@ -1,3 +1,4 @@
+import { accidentalSymbol, noteLetter } from '../music/pitch'
 import type { RGB } from '../music/colours'
 
 /**
@@ -23,4 +24,19 @@ export function textColourForFill(rgb: RGB): '#000000' | '#ffffff' {
   const contrastWithBlack = (luminance + 0.05) / 0.05
   const contrastWithWhite = 1.05 / (luminance + 0.05)
   return contrastWithBlack >= contrastWithWhite ? '#000000' : '#ffffff'
+}
+
+/**
+ * What goes inside a coloured notehead.
+ *
+ * The printed songbook puts the accidental *in* the circle — an F sharp reads
+ * "F♯" on a green head — rather than as a separate glyph before the note. That
+ * is also what the app needs: VexFlow 5 does not draw the Accidental modifier
+ * in this configuration, so a sharp placed the conventional way is invisible.
+ * Carrying it in the notehead is both more faithful and more robust.
+ */
+export function noteheadLabel(tpc: number): string {
+  const symbol = accidentalSymbol(tpc)
+  const pretty = symbol === '#' ? '♯' : symbol === 'b' ? '♭' : symbol === '##' ? '𝄪' : symbol === 'bb' ? '𝄫' : ''
+  return noteLetter(tpc) + pretty
 }
