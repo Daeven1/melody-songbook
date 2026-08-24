@@ -116,8 +116,8 @@ describe('buildSchedule — repeats', () => {
 
   it('clicks the metronome through every repeat', () => {
     const events = buildSchedule({ ...opts, repeats: 2 })
-    // 4 count-in + 8 song beats (2 bars x 2 repeats x 4 beats)
-    expect(events.filter(e => e.kind === 'metronome')).toHaveLength(12)
+    // 4 count-in + 16 song beats (2 bars x 2 repeats x 4 beats)
+    expect(events.filter(e => e.kind === 'metronome')).toHaveLength(20)
   })
 })
 

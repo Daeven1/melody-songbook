@@ -1,4 +1,5 @@
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import { App } from './ui/App'
 
-createRoot(document.getElementById('root')!).render(<h1>Melody Songbook</h1>)
+createRoot(document.getElementById('root')!).render(<App />)
