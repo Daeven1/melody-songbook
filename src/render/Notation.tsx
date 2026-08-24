@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Accidental, Beam, Formatter, Renderer, Stave, StaveNote, Voice } from 'vexflow'
+import { Accidental, Barline, Beam, Formatter, Renderer, Stave, StaveNote, Voice } from 'vexflow'
 import type { KeyName, Song } from '../types'
 import { splitIntoSystems } from './systems'
 import { vexDuration, vexKey } from './vexNotes'
@@ -146,6 +146,8 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
       // Same music start on every line, so notes, lyrics and phrase boxes stack
       // in vertical columns across systems.
       stave.setNoteStartX(stave.getX() + noteStartOffset)
+      // A closing double bar only makes sense at the very end of the song.
+      if (systemIndex === systems.length - 1) stave.setEndBarType(Barline.type.END)
       stave.setContext(context).draw()
       staveBySystem.push(stave)
 
@@ -179,11 +181,16 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
       voice.setStrict(false)
       voice.addTickables(notes)
       new Formatter().joinVoices([voice]).format([voice], staveWidth - noteStartOffset - TRAILING_PAD)
-      voice.draw(context, stave)
 
-      Beam.generateBeams(notes.filter(n => !n.isRest())).forEach(beam => {
-        beam.setContext(context).draw()
-      })
+      // Beams must be generated before the voice is drawn. Beam.generateBeams
+      // sets each grouped note's internal .beam reference, which is what makes
+      // a note skip drawing its own flag — voice.draw() decides per note,
+      // right then, whether to draw a flag. Generating beams afterwards (as
+      // this used to) is too late: every eighth had already drawn its flag,
+      // so beamed pairs showed a beam *and* a flag on top of it.
+      const beams = Beam.generateBeams(notes.filter(n => !n.isRest()))
+      voice.draw(context, stave)
+      beams.forEach(beam => beam.setContext(context).draw())
 
       // Record where every note landed, and build the notehead/lyric overlays
       // from the same layout. The staff is rendered once; only the cursor moves.
