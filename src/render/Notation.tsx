@@ -17,6 +17,8 @@ const MIN_STAVE_WIDTH = 340
 const MAX_STAVE_WIDTH = 900
 /** Breathing room per note on top of VexFlow's minimum, so heads never crowd. */
 const WIDTH_PER_NOTE = 26
+/** Just enough stave past the final note for a closing barline to sit on. */
+const TRAILING_PAD = 24
 const NOTEHEAD_RADIUS = 13
 const LYRIC_LINE_HEIGHT = 22
 const LYRIC_TOP_GAP = 16
@@ -87,15 +89,31 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
     const systemStep = SYSTEM_HEIGHT + maxLyricLines * LYRIC_LINE_HEIGHT
 
     const renderer = new Renderer(host, Renderer.Backends.SVG)
-    // Two passes: measure what each system actually needs, then draw every
-    // system at the widest of those. A 2-bar song stops where the music stops.
-    const measured = systems.map(bars => {
-      const count = bars.reduce((n, bar) => n + bar.notes.length, 0)
-      return count * (WIDTH_PER_NOTE + NOTEHEAD_RADIUS * 2) + 120
+    // Pass 1 — ask VexFlow what each system actually needs, and where its notes
+    // would start. The first system carries a time signature and the others do
+    // not, so their note-start positions differ; using the widest for all of
+    // them keeps the systems vertically aligned the way the printed book does.
+    const probes = systems.map((bars, systemIndex) => {
+      const probeStave = new Stave(LEFT_PAD, 0, MAX_STAVE_WIDTH)
+      probeStave.addClef('treble')
+      if (systemIndex === 0) probeStave.addTimeSignature('4/4')
+      const probeNotes = bars.flatMap(bar =>
+        bar.notes.map(note => new StaveNote({ keys: [vexKey(note)], duration: vexDuration(note) })),
+      )
+      const probeVoice = new Voice({ numBeats: bars.length * 4, beatValue: 4 })
+      probeVoice.setStrict(false)
+      probeVoice.addTickables(probeNotes)
+      const minWidth = new Formatter()
+        .joinVoices([probeVoice])
+        .preCalculateMinTotalWidth([probeVoice])
+      return { minWidth, noteStartOffset: probeStave.getNoteStartX() - probeStave.getX() }
     })
+
+    const noteStartOffset = Math.max(...probes.map(p => p.noteStartOffset))
+    const contentWidth = Math.max(...probes.map(p => p.minWidth))
     const staveWidth = Math.max(
       MIN_STAVE_WIDTH,
-      Math.min(MAX_STAVE_WIDTH, Math.max(...measured)),
+      Math.min(MAX_STAVE_WIDTH, noteStartOffset + contentWidth + WIDTH_PER_NOTE + TRAILING_PAD),
     )
 
     renderer.resize(staveWidth + LEFT_PAD * 2, systems.length * systemStep + 40)
@@ -116,6 +134,9 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
       stave.addClef('treble')
       // No key signature, ever: accidentals are placed per note instead.
       if (systemIndex === 0) stave.addTimeSignature('4/4')
+      // Same music start on every line, so notes, lyrics and phrase boxes stack
+      // in vertical columns across systems.
+      stave.setNoteStartX(stave.getX() + noteStartOffset)
       stave.setContext(context).draw()
 
       // Local bar index -> [start, end] note index within this system's `notes`,
@@ -147,7 +168,7 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
       const voice = new Voice({ numBeats: bars.length * 4, beatValue: 4 })
       voice.setStrict(false)
       voice.addTickables(notes)
-      new Formatter().joinVoices([voice]).format([voice], staveWidth - 80)
+      new Formatter().joinVoices([voice]).format([voice], staveWidth - noteStartOffset - TRAILING_PAD)
       voice.draw(context, stave)
 
       Beam.generateBeams(notes.filter(n => !n.isRest())).forEach(beam => {
