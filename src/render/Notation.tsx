@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Accidental, Barline, Beam, Formatter, Renderer, Stave, StaveNote, Voice } from 'vexflow'
+import { Accidental, BarNote, Barline, Beam, Formatter, Renderer, Stave, StaveNote, Stem, Voice } from 'vexflow'
 import type { KeyName, Song } from '../types'
 import { splitIntoSystems } from './systems'
 import { vexDuration, vexKey } from './vexNotes'
@@ -11,12 +11,27 @@ import { phraseBoxSpans, splitPhraseBoxesBySystem } from './phraseBoxes'
 import { lyricText } from './lyrics'
 import { PHRASES } from '../data/phrases'
 
-const SYSTEM_HEIGHT = 148
-const LEFT_PAD = 20
-const MIN_STAVE_WIDTH = 340
-const MAX_STAVE_WIDTH = 1800
-/** Just enough stave past the final note for a closing barline to sit on. */
-const TRAILING_PAD = 24
+/**
+ * The distance between two staff lines, and the unit every size below is
+ * expressed in.
+ *
+ * This is VexFlow's OWN default, and staying on it is deliberate. An earlier
+ * version enlarged the staff via `spacingBetweenLinesPx`, which stretches the
+ * stave geometry (lines, barlines) but leaves everything drawn from the music
+ * font — clef, time signature, stems, rests — at its default size. The result
+ * was a staff 2.6x too large for its own clef, with stems barely a third the
+ * length they should be. Draw at natural scale and let the SVG viewBox magnify
+ * the whole picture instead: then every proportion is VexFlow's own, and
+ * correct by construction.
+ */
+const SPACE = 10
+
+const SYSTEM_HEIGHT = SPACE * 5.7
+const LEFT_PAD = SPACE * 0.8
+const MIN_STAVE_WIDTH = SPACE * 13
+const MAX_STAVE_WIDTH = SPACE * 70
+/** Just enough stave past the final note for the closing double bar to sit on. */
+const TRAILING_PAD = SPACE * 1.2
 /**
  * VexFlow's minimum packs notes as tightly as they will legally go. The page is
  * scaled to fit the available height, so a cramped stave renders as a narrow
@@ -25,28 +40,35 @@ const TRAILING_PAD = 24
  */
 const SPREAD = 3.2
 /**
- * VexFlow's default line spacing (10 units) is far too tight for a legible
- * letter-in-notehead — a notehead sized to hold a readable letter would
- * overlap the staff lines above and below it. Widening the spacing is what
- * "enlarging the staff" actually means here; the notehead size follows from it.
+ * A tilted ellipse, like an engraved notehead. Sized so its rotated vertical
+ * half-extent is exactly SPACE / 2: a note in a space touches both bounding
+ * lines, and a note on a line reaches the middle of the space above and below.
+ * One size serves both cases.
  */
-const STAVE_LINE_SPACING = 26
-const STAVE_OPTIONS = { spacingBetweenLinesPx: STAVE_LINE_SPACING }
-// A notehead is an ellipse wider than it is tall, tilted like an engraved one —
-// not a plain circle. Sized so its rotated vertical half-extent is exactly
-// STAVE_LINE_SPACING / 2 (13): a note in a space touches both bounding lines;
-// a note on a line reaches the middle of the space above and below it. Both
-// cases need the same half-extent, so one size serves both.
-const NOTEHEAD_RX = 19
-const NOTEHEAD_RY = 12
+const NOTEHEAD_RX = SPACE * 0.73
+const NOTEHEAD_RY = SPACE * 0.46
 const NOTEHEAD_TILT_DEGREES = -20
-const LYRIC_LINE_HEIGHT = 24
-const LYRIC_TOP_GAP = 10
-const BOX_MARGIN_X = 10
-const BOX_MARGIN_Y = 14
+const NOTEHEAD_FONT_SIZE = SPACE * 0.62
+/**
+ * Stem length, in spaces. Standard engraving is an octave (3.5 spaces), which
+ * from a note ON a line ends midway between two lines. From a note in a SPACE
+ * the same length would end exactly on a line, which reads as ambiguous, so
+ * those get 4 spaces instead — both end clear of a line.
+ */
+const STEM_SPACES_FROM_LINE = 3.5
+const STEM_SPACES_FROM_SPACE = 4
+const LYRIC_LINE_HEIGHT = SPACE * 0.95
+const LYRIC_TOP_GAP = SPACE * 0.4
+const LYRIC_FONT_SIZE = SPACE * 0.72
+const BOX_MARGIN_X = SPACE * 0.4
+const BOX_MARGIN_Y = SPACE * 0.55
 const BOX_FILL_ALPHA = 0.12
 /** Breathing room kept around the trimmed content edges. */
-const CONTENT_PAD = 6
+const CONTENT_PAD = SPACE * 0.25
+/** Half-width of the cursor band that tracks the sounding note. */
+const CURSOR_HALF_WIDTH = SPACE * 0.62
+/** B4, the middle line in treble clef — the stem-direction boundary. */
+const MIDDLE_LINE_MIDI = 71
 
 export interface NotationProps {
   song: Song
@@ -118,7 +140,7 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
     // not, so their note-start positions differ; using the widest for all of
     // them keeps the systems vertically aligned the way the printed book does.
     const probes = systems.map((bars, systemIndex) => {
-      const probeStave = new Stave(LEFT_PAD, 0, MAX_STAVE_WIDTH, STAVE_OPTIONS)
+      const probeStave = new Stave(LEFT_PAD, 0, MAX_STAVE_WIDTH)
       probeStave.addClef('treble')
       if (systemIndex === 0) probeStave.addTimeSignature('4/4')
       const probeNotes = bars.flatMap(bar =>
@@ -165,7 +187,7 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
 
     systems.forEach((bars, systemIndex) => {
       const systemTop = systemIndex * systemStep + 10
-      const stave = new Stave(LEFT_PAD, systemTop, staveWidth, STAVE_OPTIONS)
+      const stave = new Stave(LEFT_PAD, systemTop, staveWidth)
       stave.addClef('treble')
       // No key signature, ever: accidentals are placed per note instead.
       if (systemIndex === 0) stave.addTimeSignature('4/4')
@@ -182,31 +204,60 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
       const barNoteRanges: { start: number; end: number }[] = []
       let noteCursor = 0
 
-      const notes = bars.flatMap(bar => {
+      // `notes` holds only the StaveNotes, so overlay indices line up with the
+      // song's note list. `tickables` is what the Voice draws — the same notes
+      // with a BarNote between bars, which is what puts a barline mid-system.
+      const notes: StaveNote[] = []
+      const tickables: (StaveNote | BarNote)[] = []
+
+      bars.forEach((bar, barIndex) => {
+        if (barIndex > 0) tickables.push(new BarNote(Barline.type.SINGLE))
         const start = noteCursor
-        const staveNotesForBar = bar.notes.map(note => {
+        bar.notes.forEach(note => {
           const staveNote = new StaveNote({ keys: [vexKey(note)], duration: vexDuration(note) })
           if (note.tpc !== null) {
             const symbol = accidentalSymbol(note.tpc)
             if (symbol) staveNote.addModifier(new Accidental(symbol), 0)
           }
           if (!staveNote.isRest()) {
+            // Stem direction by the engraving rule: a notehead on the middle
+            // line (B4) or above takes a downward stem on the left of the head,
+            // below that an upward stem on the right. VexFlow draws the stem on
+            // the correct side once the direction is set.
+            if (note.pitch !== null) {
+              staveNote.setStemDirection(note.pitch >= MIDDLE_LINE_MIDI ? Stem.DOWN : Stem.UP)
+            }
             // Suppress VexFlow's own notehead before drawing — stems and beams
-            // still attach at the same position. Our coloured circle replaces it
-            // in the overlay SVG once we know where it landed.
+            // still attach at the same position. Our coloured ellipse replaces
+            // it in the overlay SVG once we know where it landed.
             staveNote.setKeyStyle(0, { fillStyle: 'transparent', strokeStyle: 'transparent' })
           }
           noteCursor++
-          return staveNote
+          notes.push(staveNote)
+          tickables.push(staveNote)
         })
         barNoteRanges.push({ start, end: noteCursor - 1 })
-        return staveNotesForBar
       })
 
       const voice = new Voice({ numBeats: bars.length * 4, beatValue: 4 })
       voice.setStrict(false)
-      voice.addTickables(notes)
+      voice.addTickables(tickables)
       new Formatter().joinVoices([voice]).format([voice], staveWidth - noteStartOffset - TRAILING_PAD)
+
+      // Stem length has to be set after formatting, when each note knows where
+      // it sits on the stave. A note ON a line gets the standard octave (3.5
+      // spaces), which ends midway between two lines; a note in a SPACE would
+      // end exactly on a line at that length, so it gets 4 spaces instead.
+      // Either way the stem tip lands clear of a line rather than on one.
+      notes.forEach(staveNote => {
+        if (staveNote.isRest()) return
+        const y = staveNote.getYs()[0]
+        if (y === undefined) return
+        const spacesFromTopLine = (y - stave.getYForLine(0)) / SPACE
+        const sitsOnLine = Math.abs(spacesFromTopLine - Math.round(spacesFromTopLine)) < 0.25
+        const spaces = sitsOnLine ? STEM_SPACES_FROM_LINE : STEM_SPACES_FROM_SPACE
+        staveNote.setStemLength(spaces * SPACE)
+      })
 
       // Beams must be generated before the voice is drawn. Beam.generateBeams
       // sets each grouped note's internal .beam reference, which is what makes
@@ -364,10 +415,10 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
               y={box.y}
               width={box.width}
               height={box.height}
-              rx={12}
+              rx={SPACE * 0.5}
               fill={hexToRgba(box.colour, BOX_FILL_ALPHA)}
               stroke={box.colour}
-              strokeWidth={2}
+              strokeWidth={SPACE * 0.08}
             />
           ))}
         </svg>
@@ -391,7 +442,7 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
                 y={note.y}
                 textAnchor="middle"
                 dominantBaseline="central"
-                fontSize={15}
+                fontSize={NOTEHEAD_FONT_SIZE}
                 fontWeight="bold"
                 fill={note.textColour}
               >
@@ -401,7 +452,7 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
           ))}
 
           {lyricMarks.map((lyric, i) => (
-            <text key={i} x={lyric.x} y={lyric.y} textAnchor="middle" fontSize={18} fill="currentColor">
+            <text key={i} x={lyric.x} y={lyric.y} textAnchor="middle" fontSize={LYRIC_FONT_SIZE} fill="currentColor">
               {lyric.text}
             </text>
           ))}
@@ -413,14 +464,14 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
         <svg viewBox={viewBox} preserveAspectRatio="xMidYMid meet"
           className="absolute inset-0 w-full h-full pointer-events-none" aria-hidden="true">
           <rect
-            x={active.x - 16}
+            x={active.x - CURSOR_HALF_WIDTH}
             y={active.top}
-            width={32}
+            width={CURSOR_HALF_WIDTH * 2}
             height={active.bottom - active.top}
-            rx={8}
+            rx={SPACE * 0.35}
             fill="rgba(245, 158, 11, 0.30)"
             stroke="rgb(217, 119, 6)"
-            strokeWidth={3}
+            strokeWidth={SPACE * 0.12}
           />
         </svg>
       )}

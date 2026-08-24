@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Barline, Formatter, Renderer, Stave, StaveNote, Voice } from 'vexflow'
+import { Barline, Formatter, Renderer, Stave, StaveNote, Stem, Voice } from 'vexflow'
 import type { Bordun, KeyName } from '../types'
 import { BORDUN_PLAYBACK_SHIFT } from '../play/schedule'
 import { colourForPitch, rgbToCss } from '../music/colours'
@@ -7,23 +7,28 @@ import { textColourForFill } from './noteheads'
 import { bordunVexDuration, bordunVexKey } from './bordunVexNotes'
 import { REST_KEY } from './vexNotes'
 
-const LEFT_PAD = 16
-const TRAILING_PAD = 20
-const MIN_STAVE_WIDTH = 460
-const MAX_STAVE_WIDTH = 820
-// Matches Notation.tsx's staff scale, so the melody and bordun staves read as
-// one consistent system rather than two different sizes of notation.
-const STAVE_LINE_SPACING = 26
-const STAVE_OPTIONS = { spacingBetweenLinesPx: STAVE_LINE_SPACING }
-const NOTEHEAD_RX = 19
-const NOTEHEAD_RY = 12
+/**
+ * VexFlow's default line spacing, and the unit every size below is expressed
+ * in — the same convention as Notation.tsx. Drawing at natural scale keeps the
+ * clef, time signature and stems correctly proportioned to the staff; the SVG
+ * viewBox does the magnifying. See the SPACE comment in Notation.tsx.
+ */
+const SPACE = 10
+
+const LEFT_PAD = SPACE * 0.6
+const TRAILING_PAD = SPACE * 1
+const MIN_STAVE_WIDTH = SPACE * 18
+const MAX_STAVE_WIDTH = SPACE * 32
+const NOTEHEAD_RX = SPACE * 0.73
+const NOTEHEAD_RY = SPACE * 0.46
 const NOTEHEAD_TILT_DEGREES = -20
+const NOTEHEAD_FONT_SIZE = SPACE * 0.62
+/** Every bordun pitch sits above the middle line, so stems point down. */
+const STEM_SPACES = 3.5
 /** Generous first-pass canvas; cropped to the real drawn bounds below. */
-const DRAW_HEIGHT = 400
+const DRAW_HEIGHT = SPACE * 40
 /** Breathing room kept around the trimmed content edges. */
-const CONTENT_PAD = 8
-/** VexFlow's Stem.DOWN. */
-const STEM_DOWN = -1
+const CONTENT_PAD = SPACE * 0.3
 
 export interface BordunStaffProps {
   bordun: Bordun
@@ -79,14 +84,14 @@ export function BordunStaff({ bordun, keyName, litPitches, label }: BordunStaffP
       // the stem DOWN. VexFlow was choosing up, which is both wrong notation and
       // — because stem length scales with STAVE_LINE_SPACING — a tall band of
       // near-empty space above the staff.
-      if (!isRest) staveNote.setStemDirection(STEM_DOWN)
+      if (!isRest) staveNote.setStemDirection(Stem.DOWN)
       return { staveNote, sorted, isRest }
     }
 
     const probeVoice = new Voice({ numBeats: 4, beatValue: 4 })
     probeVoice.setStrict(false)
     probeVoice.addTickables(events.map(event => buildStaveNote(event).staveNote))
-    const probeStave = new Stave(LEFT_PAD, 0, MIN_STAVE_WIDTH, STAVE_OPTIONS)
+    const probeStave = new Stave(LEFT_PAD, 0, MIN_STAVE_WIDTH)
     probeStave.addClef('treble').addTimeSignature('4/4')
     const noteStartOffset = probeStave.getNoteStartX() - probeStave.getX()
     const contentWidth = new Formatter().joinVoices([probeVoice]).preCalculateMinTotalWidth([probeVoice])
@@ -98,7 +103,7 @@ export function BordunStaff({ bordun, keyName, litPitches, label }: BordunStaffP
     renderer.resize(staveWidth + LEFT_PAD * 2, DRAW_HEIGHT)
     const context = renderer.getContext()
 
-    const stave = new Stave(LEFT_PAD, 6, staveWidth, STAVE_OPTIONS)
+    const stave = new Stave(LEFT_PAD, SPACE * 0.6, staveWidth)
     stave.addClef('treble')
     stave.addTimeSignature('4/4')
     stave.setNoteStartX(stave.getX() + noteStartOffset)
@@ -119,6 +124,13 @@ export function BordunStaff({ bordun, keyName, litPitches, label }: BordunStaffP
     voice.setStrict(false)
     voice.addTickables(drawNotes.map(d => d.staveNote))
     new Formatter().joinVoices([voice]).format([voice], staveWidth - noteStartOffset - TRAILING_PAD)
+    // Stem length after formatting, when each note knows where it sits — the
+    // same reasoning as Notation.tsx: VexFlow's default stem does not scale
+    // with anything, so set it explicitly in spaces.
+    drawNotes.forEach(({ staveNote }) => {
+      if (!staveNote.isRest()) staveNote.setStemLength(STEM_SPACES * SPACE)
+    })
+
     voice.draw(context, stave)
 
     const collected: HeadMark[] = []
@@ -190,10 +202,10 @@ export function BordunStaff({ bordun, keyName, litPitches, label }: BordunStaffP
                 <ellipse
                   cx={h.x} cy={h.y} rx={NOTEHEAD_RX} ry={NOTEHEAD_RY} fill={h.fill}
                   transform={`rotate(${NOTEHEAD_TILT_DEGREES} ${h.x} ${h.y})`}
-                  stroke={lit ? '#111' : 'none'} strokeWidth={lit ? 3 : 0}
+                  stroke={lit ? '#111' : 'none'} strokeWidth={lit ? SPACE * 0.12 : 0}
                 />
                 <text x={h.x} y={h.y} textAnchor="middle" dominantBaseline="central"
-                  fontSize={15} fontWeight="bold" fill={h.textColour}>
+                  fontSize={NOTEHEAD_FONT_SIZE} fontWeight="bold" fill={h.textColour}>
                   {h.letter}
                 </text>
               </g>
