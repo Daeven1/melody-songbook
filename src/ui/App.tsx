@@ -57,10 +57,10 @@ export function App() {
 
   return (
     <div className="h-screen overflow-hidden flex flex-col bg-white text-neutral-900">
-      <header className="shrink-0 px-6 pt-1.5 pb-0 flex items-start justify-between">
+      <header className="shrink-0 px-6 pt-1 pb-0 flex items-start justify-between">
         <div>
-          <h1 className="text-4xl font-bold leading-tight">{song.title}</h1>
-          <p className="text-lg font-normal opacity-60 leading-tight">
+          <h1 className="text-4xl font-bold leading-none">{song.title}</h1>
+          <p className="text-lg font-normal opacity-60 leading-none mt-1">
             Level {song.level} · key of {key} · {song.keys[key].label}
           </p>
         </div>
@@ -68,7 +68,7 @@ export function App() {
       </header>
 
       {/* Melody instrument — what the melody half of the class plays */}
-      <section className="shrink-0 h-[18vh] px-6">
+      <section className="shrink-0 h-[20vh] px-6">
         <Xylophone
           bars={MELODY_BARS}
           litPitches={litMelodyPitch === null ? [] : [litMelodyPitch]}
@@ -91,12 +91,12 @@ export function App() {
       {/* Bordun notation — what the accompaniment half reads, same as the melody
           half reads the staff above. Sounding pitches come pre-shifted by
           BORDUN_PLAYBACK_SHIFT; BordunStaff compares against those directly. */}
-      <section className="shrink-0 h-[12vh] px-6 flex items-center justify-center">
+      <section className="shrink-0 h-[13vh] px-6 flex items-center justify-center">
         <BordunStaff bordun={bordun} keyName={key} litPitches={bordunPitches} label={`${bordun.label} — notation`} />
       </section>
 
       {/* Bordun instrument — what the accompaniment half plays */}
-      <section className="shrink-0 h-[14vh] px-6">
+      <section className="shrink-0 h-[16vh] px-6">
         <Xylophone
           bars={BORDUN_BARS}
           litPitches={bordunPitches}
@@ -106,7 +106,7 @@ export function App() {
         />
       </section>
 
-      <footer className="shrink-0 border-t bg-neutral-50 px-6 py-1.5 flex flex-wrap items-center gap-x-6 gap-y-1.5 text-sm">
+      <footer className="shrink-0 border-t bg-neutral-50 px-6 py-1 flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
         <button
           onClick={toggle}
           className={`px-8 py-3 rounded-lg text-xl font-bold text-white ${isPlaying ? 'bg-red-600' : 'bg-green-600'}`}
@@ -193,8 +193,8 @@ export function App() {
           Fullscreen
         </button>
 
-        <span className="w-full text-xs opacity-50">
-          Space plays and stops · ↑ ↓ change the tempo
+        <span className="text-xs opacity-50 whitespace-nowrap">
+          Space = play/stop · ↑↓ = tempo
         </span>
       </footer>
     </div>
