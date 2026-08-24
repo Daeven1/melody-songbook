@@ -200,6 +200,21 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
     })
 
     setMarks(collectedMarks)
+    // VexFlow sizes its SVG in fixed pixels. The overlays scale with the
+    // container, so unless the staff scales the same way the two coordinate
+    // systems drift apart — noteheads slide off their stems and phrase boxes
+    // stop lining up with barlines. Give the staff the same viewBox mapping.
+    const staffSvg = host.querySelector('svg')
+    if (staffSvg) {
+      staffSvg.setAttribute('viewBox', `0 0 ${STAVE_WIDTH + LEFT_PAD * 2} ${systems.length * systemStep + 40}`)
+      staffSvg.setAttribute('preserveAspectRatio', 'xMidYMid meet')
+      staffSvg.removeAttribute('width')
+      staffSvg.removeAttribute('height')
+      staffSvg.style.width = '100%'
+      staffSvg.style.height = '100%'
+      staffSvg.style.display = 'block'
+    }
+
     setNoteheads(collectedNoteheads)
     setLyricMarks(collectedLyrics)
     setBoxMarks(collectedBoxes)
@@ -210,10 +225,14 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
   const viewBox = `0 0 ${size.width} ${size.height}`
 
   return (
-    <div className="relative w-full">
+    <div
+      className="relative w-full"
+      style={size.width > 0 ? { aspectRatio: `${size.width} / ${size.height}` } : undefined}
+    >
       {/* Phrase boxes, behind the staff. */}
       {boxMarks.length > 0 && size.width > 0 && (
-        <svg viewBox={viewBox} className="absolute inset-0 w-full h-full pointer-events-none" aria-hidden="true">
+        <svg viewBox={viewBox} preserveAspectRatio="xMidYMid meet"
+          className="absolute inset-0 w-full h-full pointer-events-none" aria-hidden="true">
           {boxMarks.map((box, i) => (
             <rect
               key={i}
@@ -230,11 +249,12 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
         </svg>
       )}
 
-      <div ref={hostRef} className="w-full" />
+      <div ref={hostRef} className="absolute inset-0" />
 
       {/* Coloured letter noteheads + lyrics, on top of the staff. */}
       {size.width > 0 && (
-        <svg viewBox={viewBox} className="absolute inset-0 w-full h-full pointer-events-none" aria-hidden="true">
+        <svg viewBox={viewBox} preserveAspectRatio="xMidYMid meet"
+          className="absolute inset-0 w-full h-full pointer-events-none" aria-hidden="true">
           {noteheads.map((note, i) => (
             <g key={i}>
               <circle cx={note.x} cy={note.y} r={NOTEHEAD_RADIUS} fill={note.fill} />
@@ -262,7 +282,8 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
 
       {/* Cursor, topmost — on top of the note's coloured circle. */}
       {active && size.width > 0 && (
-        <svg viewBox={viewBox} className="absolute inset-0 w-full h-full pointer-events-none" aria-hidden="true">
+        <svg viewBox={viewBox} preserveAspectRatio="xMidYMid meet"
+          className="absolute inset-0 w-full h-full pointer-events-none" aria-hidden="true">
           <rect
             x={active.x - 16}
             y={active.systemTop - 10}
