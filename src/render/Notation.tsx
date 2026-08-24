@@ -183,7 +183,19 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
       // Record where every note landed, and build the notehead/lyric overlays
       // from the same layout. The staff is rendered once; only the cursor moves.
       const flatNotes = bars.flatMap(bar => bar.notes)
-      const lyricBaseY = stave.getBottomY() + LYRIC_TOP_GAP
+
+      // Centre the lyric block in the gap between this staff and the next one
+      // (or the bottom of the page, for the last system), rather than hugging
+      // the staff above it.
+      const totalHeight = systems.length * systemStep + 40
+      const nextSystemTop = systemIndex + 1 < systems.length
+        ? (systemIndex + 1) * systemStep + 10
+        : totalHeight
+      const gapHeight = nextSystemTop - stave.getBottomY()
+      const lyricBlockHeight = maxLyricLines * LYRIC_LINE_HEIGHT
+      const lyricBaseY = maxLyricLines === 0
+        ? stave.getBottomY() + LYRIC_TOP_GAP
+        : stave.getBottomY() + Math.max(LYRIC_TOP_GAP, (gapHeight - lyricBlockHeight) / 2)
 
       notes.forEach((staveNote, i) => {
         const x = staveNote.getAbsoluteX()

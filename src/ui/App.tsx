@@ -56,13 +56,13 @@ export function App() {
 
   return (
     <div className="h-screen overflow-hidden flex flex-col bg-white text-neutral-900">
-      <header className="shrink-0 px-6 pt-1.5 pb-0 flex items-baseline justify-between">
-        <h1 className="text-3xl font-bold">
-          {song.title}
-          <span className="ml-4 text-xl font-normal opacity-60">
+      <header className="shrink-0 px-6 pt-1.5 pb-0 flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold leading-tight">{song.title}</h1>
+          <p className="text-base font-normal opacity-60 leading-tight">
             Level {song.level} · key of {key} · {song.keys[key].label}
-          </span>
-        </h1>
+          </p>
+        </div>
         <span className="text-xl font-semibold tabular-nums opacity-70">{bpm} bpm</span>
       </header>
 
