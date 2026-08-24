@@ -245,9 +245,22 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
       const nextStave = staveBySystem[systemIndex + 1]
       const gapBottom = nextStave ? nextStave.getYForLine(0) : totalHeight
       const gapHeight = gapBottom - stave.getBottomY()
-      return maxLyricLines === 0
+      const result = maxLyricLines === 0
         ? stave.getBottomY() + LYRIC_TOP_GAP
         : stave.getBottomY() + Math.max(LYRIC_TOP_GAP, (gapHeight - lyricBlockHeight) / 2)
+      // eslint-disable-next-line no-console
+      console.log('LYRIC_DEBUG', {
+        systemIndex,
+        staveBottomY: stave.getBottomY(),
+        nextStaveTopLine: nextStave ? nextStave.getYForLine(0) : null,
+        totalHeight,
+        gapBottom,
+        gapHeight,
+        maxLyricLines,
+        lyricBlockHeight,
+        result,
+      })
+      return result
     })
     const collectedLyrics: LyricMark[] = pendingLyrics.map(lyric => ({
       x: lyric.x,
