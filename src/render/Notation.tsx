@@ -114,6 +114,11 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
       return { minWidth, noteStartOffset: probeStave.getNoteStartX() - probeStave.getX() }
     })
 
+    // A Stave's constructor Y is not where its top line actually renders — VexFlow
+    // reserves fixed space above it for the clef. Measure that offset once so the
+    // lyric-centering below can find each staff's true top edge, not the raw Y.
+    const topLineOffset = new Stave(0, 0, MIN_STAVE_WIDTH).getYForLine(0)
+
     const noteStartOffset = Math.max(...probes.map(p => p.noteStartOffset))
     const contentWidth = Math.max(...probes.map(p => p.minWidth))
     const staveWidth = Math.max(
@@ -189,7 +194,7 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
       // the staff above it.
       const totalHeight = systems.length * systemStep + 40
       const nextSystemTop = systemIndex + 1 < systems.length
-        ? (systemIndex + 1) * systemStep + 10
+        ? (systemIndex + 1) * systemStep + 10 + topLineOffset
         : totalHeight
       const gapHeight = nextSystemTop - stave.getBottomY()
       const lyricBlockHeight = maxLyricLines * LYRIC_LINE_HEIGHT
