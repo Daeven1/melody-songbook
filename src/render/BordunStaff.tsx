@@ -15,8 +15,8 @@ const MAX_STAVE_WIDTH = 520
 // one consistent system rather than two different sizes of notation.
 const STAVE_LINE_SPACING = 26
 const STAVE_OPTIONS = { spacingBetweenLinesPx: STAVE_LINE_SPACING }
-const NOTEHEAD_RX = 13
-const NOTEHEAD_RY = 9
+const NOTEHEAD_RX = 19
+const NOTEHEAD_RY = 12
 const NOTEHEAD_TILT_DEGREES = -20
 const STAVE_HEIGHT = 180
 
@@ -167,7 +167,7 @@ export function BordunStaff({ bordun, keyName, litPitches, label }: BordunStaffP
                   stroke={lit ? '#111' : 'none'} strokeWidth={lit ? 3 : 0}
                 />
                 <text x={h.x} y={h.y} textAnchor="middle" dominantBaseline="central"
-                  fontSize={13} fontWeight="bold" fill={h.textColour}>
+                  fontSize={15} fontWeight="bold" fill={h.textColour}>
                   {h.letter}
                 </text>
               </g>

@@ -33,14 +33,17 @@ const SPREAD = 2.4
 const STAVE_LINE_SPACING = 26
 const STAVE_OPTIONS = { spacingBetweenLinesPx: STAVE_LINE_SPACING }
 // A notehead is an ellipse wider than it is tall, tilted like an engraved one —
-// not a plain circle — sized so it clears the lines above and below a space.
-const NOTEHEAD_RX = 13
-const NOTEHEAD_RY = 9
+// not a plain circle. Sized so its rotated vertical half-extent is exactly
+// STAVE_LINE_SPACING / 2 (13): a note in a space touches both bounding lines;
+// a note on a line reaches the middle of the space above and below it. Both
+// cases need the same half-extent, so one size serves both.
+const NOTEHEAD_RX = 19
+const NOTEHEAD_RY = 12
 const NOTEHEAD_TILT_DEGREES = -20
 const LYRIC_LINE_HEIGHT = 24
 const LYRIC_TOP_GAP = 10
 const BOX_MARGIN_X = 10
-const BOX_MARGIN_Y = 28
+const BOX_MARGIN_Y = 14
 const BOX_FILL_ALPHA = 0.12
 
 export interface NotationProps {
@@ -367,7 +370,7 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
                 y={note.y}
                 textAnchor="middle"
                 dominantBaseline="central"
-                fontSize={13}
+                fontSize={15}
                 fontWeight="bold"
                 fill={note.textColour}
               >
