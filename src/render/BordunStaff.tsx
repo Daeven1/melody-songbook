@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Barline, Formatter, Renderer, Stave, StaveNote, Voice } from 'vexflow'
 import type { Bordun, KeyName } from '../types'
 import { BORDUN_PLAYBACK_SHIFT } from '../play/schedule'
@@ -21,13 +21,15 @@ export interface BordunStaffProps {
   label: string
 }
 
+/** A drawn notehead's fixed geometry — everything that does NOT change while playing. */
 interface HeadMark {
   x: number
   y: number
   fill: string
   textColour: string
   letter: string
-  lit: boolean
+  /** This notehead's written pitch, shifted to the sounding pitch it lights up for. */
+  sounding: number
 }
 
 /**
@@ -37,6 +39,12 @@ interface HeadMark {
  *
  * Every bordun pattern in the book is halves and quarters only, so unlike the
  * melody staff this never needs beaming.
+ *
+ * Drawing the staff (expensive: tears down and rebuilds an SVG via VexFlow) and
+ * lighting the current beat (cheap: a Set lookup) are kept on separate clocks.
+ * The effect below runs only when the pattern or key changes; `litPitches`
+ * changes up to 60 times a second during playback and is compared directly in
+ * the render body instead, the same way Xylophone computes its lit bars.
  */
 export function BordunStaff({ bordun, keyName, litPitches, label }: BordunStaffProps) {
   const hostRef = useRef<HTMLDivElement>(null)
@@ -50,20 +58,16 @@ export function BordunStaff({ bordun, keyName, litPitches, label }: BordunStaffP
 
     const events = bordun.keys[keyName]
 
-    const staveNotes = events.map(event => {
+    const buildStaveNote = (event: (typeof events)[number]) => {
       const isRest = event.pitches.length === 0
       const sorted = [...event.pitches].sort((a, b) => a - b)
       const keys = isRest ? [REST_KEY] : sorted.map(bordunVexKey)
-      return {
-        event,
-        sortedPitches: sorted,
-        staveNote: new StaveNote({ keys, duration: bordunVexDuration(event.duration, isRest) }),
-      }
-    })
+      return { staveNote: new StaveNote({ keys, duration: bordunVexDuration(event.duration, isRest) }), sorted, isRest }
+    }
 
     const probeVoice = new Voice({ numBeats: 4, beatValue: 4 })
     probeVoice.setStrict(false)
-    probeVoice.addTickables(staveNotes.map(({ staveNote }) => staveNote))
+    probeVoice.addTickables(events.map(event => buildStaveNote(event).staveNote))
     const probeStave = new Stave(LEFT_PAD, 0, MIN_STAVE_WIDTH)
     probeStave.addClef('treble').addTimeSignature('4/4')
     const noteStartOffset = probeStave.getNoteStartX() - probeStave.getX()
@@ -88,10 +92,7 @@ export function BordunStaff({ bordun, keyName, litPitches, label }: BordunStaffP
     // Fresh StaveNote objects — the probe pass above already consumed the
     // originals' formatting state.
     const drawNotes = events.map(event => {
-      const isRest = event.pitches.length === 0
-      const sorted = [...event.pitches].sort((a, b) => a - b)
-      const keys = isRest ? [REST_KEY] : sorted.map(bordunVexKey)
-      const staveNote = new StaveNote({ keys, duration: bordunVexDuration(event.duration, isRest) })
+      const { staveNote, sorted, isRest } = buildStaveNote(event)
       if (!isRest) {
         sorted.forEach((_, i) => staveNote.setKeyStyle(i, { fillStyle: 'transparent', strokeStyle: 'transparent' }))
       }
@@ -104,29 +105,23 @@ export function BordunStaff({ bordun, keyName, litPitches, label }: BordunStaffP
     new Formatter().joinVoices([voice]).format([voice], staveWidth - noteStartOffset - TRAILING_PAD)
     voice.draw(context, stave)
 
-    const litSounding = new Set(litPitches)
     const collected: HeadMark[] = []
-
     drawNotes.forEach(({ staveNote, sorted }) => {
       if (staveNote.isRest()) return
       const x = staveNote.getAbsoluteX()
       const ys = staveNote.getYs()
       sorted.forEach((writtenPitch, i) => {
         const rgb = colourForPitch(writtenPitch)
-        const sounding = writtenPitch + BORDUN_PLAYBACK_SHIFT
         collected.push({
           x,
           y: ys[i] ?? 0,
           fill: rgbToCss(rgb),
           textColour: textColourForFill(rgb),
           letter: bordunVexKey(writtenPitch)[0]!.toUpperCase(),
-          lit: litSounding.has(sounding),
+          sounding: writtenPitch + BORDUN_PLAYBACK_SHIFT,
         })
       })
     })
-
-    // eslint-disable-next-line no-console
-    console.log('BORDUN_DEBUG', { litPitches, litSounding: [...litSounding], collectedLit: collected.map(c => c.lit) })
     setHeads(collected)
 
     const staffSvg = host.querySelector('svg')
@@ -141,8 +136,11 @@ export function BordunStaff({ bordun, keyName, litPitches, label }: BordunStaffP
     }
 
     setSize({ width: staveWidth + LEFT_PAD * 2, height: staveHeight })
-  }, [bordun, keyName, litPitches])
+    // litPitches deliberately excluded — see the effect's doc comment above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bordun, keyName])
 
+  const litSounding = useMemo(() => new Set(litPitches), [litPitches])
   const viewBox = `0 0 ${size.width} ${size.height}`
 
   return (
@@ -154,18 +152,21 @@ export function BordunStaff({ bordun, keyName, litPitches, label }: BordunStaffP
       {size.width > 0 && (
         <svg viewBox={viewBox} preserveAspectRatio="xMidYMid meet"
           className="absolute inset-0 w-full h-full pointer-events-none" aria-hidden="true" aria-label={label}>
-          {heads.map((h, i) => (
-            <g key={i}>
-              <circle
-                cx={h.x} cy={h.y} r={NOTEHEAD_RADIUS} fill={h.fill}
-                stroke={h.lit ? '#111' : 'none'} strokeWidth={h.lit ? 3 : 0}
-              />
-              <text x={h.x} y={h.y} textAnchor="middle" dominantBaseline="central"
-                fontSize={11} fontWeight="bold" fill={h.textColour}>
-                {h.letter}
-              </text>
-            </g>
-          ))}
+          {heads.map((h, i) => {
+            const lit = litSounding.has(h.sounding)
+            return (
+              <g key={i}>
+                <circle
+                  cx={h.x} cy={h.y} r={NOTEHEAD_RADIUS} fill={h.fill}
+                  stroke={lit ? '#111' : 'none'} strokeWidth={lit ? 3 : 0}
+                />
+                <text x={h.x} y={h.y} textAnchor="middle" dominantBaseline="central"
+                  fontSize={11} fontWeight="bold" fill={h.textColour}>
+                  {h.letter}
+                </text>
+              </g>
+            )
+          })}
         </svg>
       )}
     </div>
