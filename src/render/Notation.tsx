@@ -53,7 +53,9 @@ export interface NotationProps {
 /** Where a note sits on the page, so the cursor can be laid over it each frame. */
 interface NoteMark {
   x: number
-  systemTop: number
+  /** The system's real vertical extent — same box the phrase box behind it uses. */
+  top: number
+  bottom: number
 }
 
 /** A coloured letter notehead, drawn in place of VexFlow's own notehead glyph. */
@@ -208,9 +210,20 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
       // from the same layout. The staff is rendered once; only the cursor moves.
       const flatNotes = bars.flatMap(bar => bar.notes)
 
+      // The system's real vertical extent, read from the actual drawn stave —
+      // NOT derived from systemTop with a hand-tuned offset. A Stave's
+      // constructor Y is not where it visually renders (see the lyric-gap
+      // comment below), and that gap scales with STAVE_LINE_SPACING, so any
+      // fixed offset here goes stale the moment that spacing changes. The
+      // cursor and the phrase box behind it share this same box on purpose —
+      // the cursor is "the phrase box for whichever note is playing right now".
+      const lineYs = [stave.getYForLine(0), stave.getYForLine(4)]
+      const systemBoxTop = Math.min(...lineYs) - BOX_MARGIN_Y
+      const systemBoxBottom = Math.max(...lineYs) + BOX_MARGIN_Y
+
       notes.forEach((staveNote, i) => {
         const x = staveNote.getAbsoluteX()
-        collectedMarks.push({ x, systemTop })
+        collectedMarks.push({ x, top: systemBoxTop, bottom: systemBoxBottom })
 
         const originalNote = flatNotes[i]
         if (!originalNote) return
@@ -232,9 +245,8 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
       })
 
       // Phrase boxes, from bar boundaries to pixel spans, drawn behind the staff.
-      const lineYs = [stave.getYForLine(0), stave.getYForLine(4)]
-      const boxTop = Math.min(...lineYs) - BOX_MARGIN_Y
-      const boxBottom = Math.max(...lineYs) + BOX_MARGIN_Y
+      const boxTop = systemBoxTop
+      const boxBottom = systemBoxBottom
 
       boxesBySystem
         .filter(box => box.systemIndex === systemIndex)
@@ -378,9 +390,9 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
           className="absolute inset-0 w-full h-full pointer-events-none" aria-hidden="true">
           <rect
             x={active.x - 16}
-            y={active.systemTop - 10}
+            y={active.top}
             width={32}
-            height={100}
+            height={active.bottom - active.top}
             rx={8}
             fill="rgba(245, 158, 11, 0.30)"
             stroke="rgb(217, 119, 6)"
