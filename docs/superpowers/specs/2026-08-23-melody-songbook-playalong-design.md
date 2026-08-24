@@ -392,3 +392,54 @@ Both are small and one-time.
   `A B C B` for *Frog in the Meadow*, `A A B C` for *Mò Lì Huā*. Read off the PDF.
 - **Hand assignments for the 5 bordun patterns** — not present in the MuseScore files.
   Chord and Levels are both hands; Broken alternates; the two Crossovers cross one hand over.
+
+---
+
+## What executing the data pipeline changed (2026-08-24)
+
+The importer is built and green (290 tests). Executing it against the real corpus
+corrected five things stated above. **Plan 2 should treat the statements in this
+section as authoritative over the earlier text.**
+
+**Key labels are read, not derived.** The section above says the label is derived
+from the pitch set. It cannot be. The labels are pedagogical, in teaching order —
+*Old Macdonald* is labelled `GA EDC`, and *Ring Around the Rosie* is labelled
+`CDEGA` while using only four of those five notes. They are read from the file and
+identified by content (a note-letter pattern), not by position: 3 of 76 frames store
+`[label, title]` rather than `[title, label]`, so a positional rule silently imported
+three song titles as key labels.
+
+**Keys agree only up to a uniform octave.** *ECE Has a Music Room* and *Shake Them
+'Simmons Down* are authored in F and G exactly one octave below a mechanical
+transposition. Both are the only songs whose C version starts on sol (G4–E5), so
+naive +5/+7 would reach A5/B5, above the practical soprano range. The validation
+test asserts all per-note deltas equal, that delta a multiple of 12, and that it
+matches a pinned per-song table — so a mis-split still fails while the deliberate
+register choice passes.
+
+**The `*CHALLENGE*` bordun is identified by musical shape.** Its annotation lives in
+the title frame for the key of C but as an in-measure `StaffText` for D, F and G.
+The plain crossover ends on a rest; the challenge ends on a sounding note. Shape is
+the classifier; the annotation, wherever it appears, is a cross-check that throws on
+disagreement.
+
+**Borduns are emitted in the book's page order** — chord, broken, levels, crossover,
+crossover-challenge — which is *not* the order the MuseScore file stores them in.
+The five buttons should follow the emitted order.
+
+**`Song` has no `phrases` field.** Phrase letters live in `src/data/phrases.ts`,
+keyed by song id, because they are hand-transcribed from the PDF rather than
+imported. `Note.lyrics` is dense: index 0 is the main line, index 1 the
+romanisation or second verse where one exists.
+
+### Known-unproven and outstanding
+
+- **Tempo reading is untested against real data.** No corpus file contains a
+  `<Tempo>` element, so the qps→BPM conversion has never executed on a real marking.
+  It falls back to 100 safely. Verify if Lacie ever adds a tempo.
+- **`cut-the-cake`'s key-D label reads `DF#EAB D`**, where every other label in the
+  book is ascending (compare *Mò Lì Huā*'s `DEF#AB`). The importer is faithful to the
+  file; this looks like a typo in the source and will be projected on screen.
+  A question for Lacie, not a code change.
+- **Bordun hand assignments in `src/data/bordunHands.ts` are provisional** and still
+  need Lacie's confirmation.
