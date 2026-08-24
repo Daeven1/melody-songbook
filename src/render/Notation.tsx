@@ -26,10 +26,10 @@ import { PHRASES } from '../data/phrases'
  */
 const SPACE = 10
 
-const SYSTEM_HEIGHT = SPACE * 5.7
+const SYSTEM_HEIGHT = SPACE * 7.2
 const LEFT_PAD = SPACE * 0.8
 const MIN_STAVE_WIDTH = SPACE * 13
-const MAX_STAVE_WIDTH = SPACE * 70
+const MAX_STAVE_WIDTH = SPACE * 62
 /** Just enough stave past the final note for the closing double bar to sit on. */
 const TRAILING_PAD = SPACE * 1.2
 /**
@@ -38,7 +38,7 @@ const TRAILING_PAD = SPACE * 1.2
  * block in the middle of a wide screen. Spreading the music out uses the width
  * a projector actually has.
  */
-const SPREAD = 3.2
+const SPREAD = 2.6
 /**
  * A tilted ellipse, like an engraved notehead. Sized so its rotated vertical
  * half-extent is exactly SPACE / 2: a note in a space touches both bounding
