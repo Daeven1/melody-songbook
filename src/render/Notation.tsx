@@ -11,7 +11,7 @@ import { phraseBoxSpans, splitPhraseBoxesBySystem } from './phraseBoxes'
 import { lyricText } from './lyrics'
 import { PHRASES } from '../data/phrases'
 
-const SYSTEM_HEIGHT = 150
+const SYSTEM_HEIGHT = 124
 const LEFT_PAD = 20
 const MIN_STAVE_WIDTH = 340
 const MAX_STAVE_WIDTH = 1400
@@ -26,7 +26,7 @@ const TRAILING_PAD = 24
 const SPREAD = 2.4
 const NOTEHEAD_RADIUS = 13
 const LYRIC_LINE_HEIGHT = 22
-const LYRIC_TOP_GAP = 16
+const LYRIC_TOP_GAP = 12
 const BOX_MARGIN_X = 10
 const BOX_MARGIN_Y = 20
 const BOX_FILL_ALPHA = 0.12
