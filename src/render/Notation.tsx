@@ -14,7 +14,7 @@ import { PHRASES } from '../data/phrases'
 const SYSTEM_HEIGHT = 148
 const LEFT_PAD = 20
 const MIN_STAVE_WIDTH = 340
-const MAX_STAVE_WIDTH = 1400
+const MAX_STAVE_WIDTH = 1800
 /** Just enough stave past the final note for a closing barline to sit on. */
 const TRAILING_PAD = 24
 /**
@@ -23,7 +23,7 @@ const TRAILING_PAD = 24
  * block in the middle of a wide screen. Spreading the music out uses the width
  * a projector actually has.
  */
-const SPREAD = 2.4
+const SPREAD = 3.2
 /**
  * VexFlow's default line spacing (10 units) is far too tight for a legible
  * letter-in-notehead — a notehead sized to hold a readable letter would
