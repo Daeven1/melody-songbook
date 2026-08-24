@@ -11,7 +11,7 @@ import { phraseBoxSpans, splitPhraseBoxesBySystem } from './phraseBoxes'
 import { lyricText } from './lyrics'
 import { PHRASES } from '../data/phrases'
 
-const SYSTEM_HEIGHT = 180
+const SYSTEM_HEIGHT = 148
 const LEFT_PAD = 20
 const MIN_STAVE_WIDTH = 340
 const MAX_STAVE_WIDTH = 1400
@@ -138,13 +138,19 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
       Math.min(MAX_STAVE_WIDTH, noteStartOffset + contentWidth * SPREAD + TRAILING_PAD),
     )
 
-    renderer.resize(staveWidth + LEFT_PAD * 2, systems.length * systemStep + 40)
+    // A generous, deliberately-oversized first pass — trimmed to the real
+    // content height below, once the last system's actual geometry is known.
+    // Never a tight estimate: SVG content isn't clipped by this initial size,
+    // only by the viewBox set at the end, so over-drawing here is free and
+    // under-drawing would risk clipping real content before we can measure it.
+    renderer.resize(staveWidth + LEFT_PAD * 2, systems.length * systemStep + 400)
     const context = renderer.getContext()
 
     const collectedMarks: NoteMark[] = []
     const collectedNoteheads: NoteheadMark[] = []
     const collectedBoxes: BoxMark[] = []
     const staveBySystem: Stave[] = []
+    const boxBottomBySystem: number[] = []
     // Centering a lyric line needs the top of the *next* staff, which does not
     // exist yet while this system is being drawn — collect the syllables now
     // and place them once every system's real, drawn Stave is known.
@@ -250,6 +256,7 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
       // Phrase boxes, from bar boundaries to pixel spans, drawn behind the staff.
       const boxTop = systemBoxTop
       const boxBottom = systemBoxBottom
+      boxBottomBySystem.push(boxBottom)
 
       boxesBySystem
         .filter(box => box.systemIndex === systemIndex)
@@ -273,8 +280,11 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
         })
     })
 
-    const totalHeight = systems.length * systemStep + 40
     const lyricBlockHeight = maxLyricLines * LYRIC_LINE_HEIGHT
+    // Enough room below the last system's box for its lyric block, with the
+    // same top-and-bottom breathing room every other system's lyric gets.
+    const lastBoxBottom = boxBottomBySystem.at(-1) ?? 0
+    const totalHeight = lastBoxBottom + lyricBlockHeight + LYRIC_TOP_GAP * 2
     const lyricBaseYBySystem = staveBySystem.map((stave, systemIndex) => {
       // stave.getBottomY() is not the visible bottom staff line — VexFlow
       // reserves extra room below it (for its own lyric annotations, which we
@@ -305,7 +315,7 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
     // stop lining up with barlines. Give the staff the same viewBox mapping.
     const staffSvg = host.querySelector('svg')
     if (staffSvg) {
-      staffSvg.setAttribute('viewBox', `0 0 ${staveWidth + LEFT_PAD * 2} ${systems.length * systemStep + 40}`)
+      staffSvg.setAttribute('viewBox', `0 0 ${staveWidth + LEFT_PAD * 2} ${totalHeight}`)
       staffSvg.setAttribute('preserveAspectRatio', 'xMidYMid meet')
       staffSvg.removeAttribute('width')
       staffSvg.removeAttribute('height')
@@ -317,7 +327,7 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
     setNoteheads(collectedNoteheads)
     setLyricMarks(collectedLyrics)
     setBoxMarks(collectedBoxes)
-    setSize({ width: staveWidth + LEFT_PAD * 2, height: systems.length * systemStep + 40 })
+    setSize({ width: staveWidth + LEFT_PAD * 2, height: totalHeight })
   }, [song, keyName])
 
   const active = activeNoteIndex === null ? null : marks[activeNoteIndex] ?? null
