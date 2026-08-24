@@ -7,6 +7,7 @@ import { usePlayback } from '../play/usePlayback'
 import { flattenNotes } from '../play/schedule'
 import { Notation } from '../render/Notation'
 import { Xylophone } from '../render/Xylophone'
+import { BordunStaff } from '../render/BordunStaff'
 import { BORDUN_SOUNDING_RANGE, MELODY_RANGE, barsForRange } from '../render/xylophoneLayout'
 
 const SONGS = (songsJson as unknown as Song[]).slice().sort((a, b) =>
@@ -58,16 +59,16 @@ export function App() {
     <div className="h-screen overflow-hidden flex flex-col bg-white text-neutral-900">
       <header className="shrink-0 px-6 pt-1.5 pb-0 flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold leading-tight">{song.title}</h1>
-          <p className="text-base font-normal opacity-60 leading-tight">
+          <h1 className="text-4xl font-bold leading-tight">{song.title}</h1>
+          <p className="text-lg font-normal opacity-60 leading-tight">
             Level {song.level} · key of {key} · {song.keys[key].label}
           </p>
         </div>
-        <span className="text-xl font-semibold tabular-nums opacity-70">{bpm} bpm</span>
+        <span className="text-2xl font-semibold tabular-nums opacity-70">{bpm} bpm</span>
       </header>
 
       {/* Melody instrument — what the melody half of the class plays */}
-      <section className="shrink-0 h-[23vh] px-6">
+      <section className="shrink-0 h-[18vh] px-6">
         <Xylophone
           bars={MELODY_BARS}
           litPitches={litMelodyPitch === null ? [] : [litMelodyPitch]}
@@ -87,8 +88,15 @@ export function App() {
         )}
       </main>
 
+      {/* Bordun notation — what the accompaniment half reads, same as the melody
+          half reads the staff above. Sounding pitches come pre-shifted by
+          BORDUN_PLAYBACK_SHIFT; BordunStaff compares against those directly. */}
+      <section className="shrink-0 h-[12vh] px-6 flex items-center justify-center">
+        <BordunStaff bordun={bordun} keyName={key} litPitches={bordunPitches} label={`${bordun.label} — notation`} />
+      </section>
+
       {/* Bordun instrument — what the accompaniment half plays */}
-      <section className="shrink-0 h-[23vh] px-6">
+      <section className="shrink-0 h-[14vh] px-6">
         <Xylophone
           bars={BORDUN_BARS}
           litPitches={bordunPitches}
@@ -130,19 +138,16 @@ export function App() {
           ))}
         </div>
 
-        <div className="flex items-center gap-2">
+        <label className="flex items-center gap-2">
           <span className="font-semibold">Bordun</span>
-          {BORDUNS.map(b => (
-            <button
-              key={b.id}
-              onClick={() => { setBordunId(b.id); stop() }}
-              className={`px-3 py-1 rounded border ${b.id === bordunId ? 'bg-neutral-900 text-white' : 'bg-white'}`}
-              title={b.label}
-            >
-              {b.label.replace(' Bordun', '')}
-            </button>
-          ))}
-        </div>
+          <select
+            value={bordunId}
+            onChange={e => { setBordunId(e.target.value as BordunId); stop() }}
+            className="border rounded px-2 py-1"
+          >
+            {BORDUNS.map(b => <option key={b.id} value={b.id}>{b.label}</option>)}
+          </select>
+        </label>
 
         <label className="flex items-center gap-2">
           <span className="font-semibold">Tempo</span>
