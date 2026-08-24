@@ -92,12 +92,12 @@ export function App() {
       {/* Bordun notation — what the accompaniment half reads, same as the melody
           half reads the staff above. Sounding pitches come pre-shifted by
           BORDUN_PLAYBACK_SHIFT; BordunStaff compares against those directly. */}
-      <section className="shrink-0 h-[10vh] px-6 flex items-center justify-center">
+      <section className="shrink-0 h-[12vh] px-6 flex items-center justify-center">
         <BordunStaff bordun={bordun} keyName={key} litPitches={bordunPitches} label={`${bordun.label} — notation`} />
       </section>
 
       {/* Bordun instrument — what the accompaniment half plays */}
-      <section className="shrink-0 h-[12vh] px-6">
+      <section className="shrink-0 h-[10vh] px-6">
         <Xylophone
           bars={bordunBars}
           litPitches={bordunPitches}

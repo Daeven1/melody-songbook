@@ -9,8 +9,8 @@ import { REST_KEY } from './vexNotes'
 
 const LEFT_PAD = 16
 const TRAILING_PAD = 20
-const MIN_STAVE_WIDTH = 260
-const MAX_STAVE_WIDTH = 520
+const MIN_STAVE_WIDTH = 460
+const MAX_STAVE_WIDTH = 820
 // Matches Notation.tsx's staff scale, so the melody and bordun staves read as
 // one consistent system rather than two different sizes of notation.
 const STAVE_LINE_SPACING = 26
@@ -84,7 +84,7 @@ export function BordunStaff({ bordun, keyName, litPitches, label }: BordunStaffP
     const contentWidth = new Formatter().joinVoices([probeVoice]).preCalculateMinTotalWidth([probeVoice])
     const staveWidth = Math.max(
       MIN_STAVE_WIDTH,
-      Math.min(MAX_STAVE_WIDTH, noteStartOffset + contentWidth * 1.6 + TRAILING_PAD),
+      Math.min(MAX_STAVE_WIDTH, noteStartOffset + contentWidth * 2.4 + TRAILING_PAD),
     )
     const renderer = new Renderer(host, Renderer.Backends.SVG)
     renderer.resize(staveWidth + LEFT_PAD * 2, DRAW_HEIGHT)
