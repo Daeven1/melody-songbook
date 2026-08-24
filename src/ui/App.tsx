@@ -56,7 +56,7 @@ export function App() {
   const bordunHand = bordunPitches.length > 1 ? 'both' : bordunPitches.length === 1 ? 'R' : null
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col bg-white text-neutral-900">
+    <div className="h-dvh overflow-hidden flex flex-col bg-white text-neutral-900">
       <header className="shrink-0 px-6 pt-1 pb-0 flex items-start justify-between">
         <div>
           <h1 className="text-4xl font-bold leading-none">{song.title}</h1>

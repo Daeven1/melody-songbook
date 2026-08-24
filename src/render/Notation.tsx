@@ -252,10 +252,12 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
       // stave.getBottomY() is not the visible bottom staff line — VexFlow
       // reserves extra room below it (for its own lyric annotations, which we
       // draw ourselves instead), so it sits well past what the eye sees as the
-      // staff. getYForLine(4) is the real bottom line; pair it with the next
-      // system's real top line, exactly as the phrase-box layout above already
-      // does successfully.
-      const gapTop = stave.getYForLine(4)
+      // staff. getYForLine(4) is the real bottom line, exactly as the phrase-box
+      // layout above already uses successfully. Every song in this book has a
+      // phrase box, which extends BOX_MARGIN_Y past that line and is drawn on
+      // top of it — starting the lyric gap there (not at the bare staff line)
+      // keeps the lyric clear of the box instead of nearly touching it.
+      const gapTop = stave.getYForLine(4) + BOX_MARGIN_Y
       const nextStave = staveBySystem[systemIndex + 1]
       const gapBottom = nextStave ? nextStave.getYForLine(0) : totalHeight
       const gapHeight = gapBottom - gapTop
