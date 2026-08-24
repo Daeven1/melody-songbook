@@ -114,11 +114,6 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
       return { minWidth, noteStartOffset: probeStave.getNoteStartX() - probeStave.getX() }
     })
 
-    // A Stave's constructor Y is not where its top line actually renders — VexFlow
-    // reserves fixed space above it for the clef. Measure that offset once so the
-    // lyric-centering below can find each staff's true top edge, not the raw Y.
-    const topLineOffset = new Stave(0, 0, MIN_STAVE_WIDTH).getYForLine(0)
-
     const noteStartOffset = Math.max(...probes.map(p => p.noteStartOffset))
     const contentWidth = Math.max(...probes.map(p => p.minWidth))
     const staveWidth = Math.max(
@@ -131,8 +126,12 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
 
     const collectedMarks: NoteMark[] = []
     const collectedNoteheads: NoteheadMark[] = []
-    const collectedLyrics: LyricMark[] = []
     const collectedBoxes: BoxMark[] = []
+    const staveBySystem: Stave[] = []
+    // Centering a lyric line needs the top of the *next* staff, which does not
+    // exist yet while this system is being drawn — collect the syllables now
+    // and place them once every system's real, drawn Stave is known.
+    const pendingLyrics: { systemIndex: number; x: number; lineIndex: number; text: string }[] = []
 
     const phraseEntry = PHRASES[song.id]
     const boxSpans = phraseEntry ? phraseBoxSpans(phraseEntry) : []
@@ -148,6 +147,7 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
       // in vertical columns across systems.
       stave.setNoteStartX(stave.getX() + noteStartOffset)
       stave.setContext(context).draw()
+      staveBySystem.push(stave)
 
       // Local bar index -> [start, end] note index within this system's `notes`,
       // so phrase boxes (which are expressed in bars) can be mapped to pixel x.
@@ -189,19 +189,6 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
       // from the same layout. The staff is rendered once; only the cursor moves.
       const flatNotes = bars.flatMap(bar => bar.notes)
 
-      // Centre the lyric block in the gap between this staff and the next one
-      // (or the bottom of the page, for the last system), rather than hugging
-      // the staff above it.
-      const totalHeight = systems.length * systemStep + 40
-      const nextSystemTop = systemIndex + 1 < systems.length
-        ? (systemIndex + 1) * systemStep + 10 + topLineOffset
-        : totalHeight
-      const gapHeight = nextSystemTop - stave.getBottomY()
-      const lyricBlockHeight = maxLyricLines * LYRIC_LINE_HEIGHT
-      const lyricBaseY = maxLyricLines === 0
-        ? stave.getBottomY() + LYRIC_TOP_GAP
-        : stave.getBottomY() + Math.max(LYRIC_TOP_GAP, (gapHeight - lyricBlockHeight) / 2)
-
       notes.forEach((staveNote, i) => {
         const x = staveNote.getAbsoluteX()
         collectedMarks.push({ x, systemTop })
@@ -221,11 +208,7 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
         }
 
         originalNote.lyrics.forEach((syllable, lineIndex) => {
-          collectedLyrics.push({
-            x,
-            y: lyricBaseY + lineIndex * LYRIC_LINE_HEIGHT,
-            text: lyricText(syllable),
-          })
+          pendingLyrics.push({ systemIndex, x, lineIndex, text: lyricText(syllable) })
         })
       })
 
@@ -255,6 +238,22 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
           })
         })
     })
+
+    const totalHeight = systems.length * systemStep + 40
+    const lyricBlockHeight = maxLyricLines * LYRIC_LINE_HEIGHT
+    const lyricBaseYBySystem = staveBySystem.map((stave, systemIndex) => {
+      const nextStave = staveBySystem[systemIndex + 1]
+      const gapBottom = nextStave ? nextStave.getYForLine(0) : totalHeight
+      const gapHeight = gapBottom - stave.getBottomY()
+      return maxLyricLines === 0
+        ? stave.getBottomY() + LYRIC_TOP_GAP
+        : stave.getBottomY() + Math.max(LYRIC_TOP_GAP, (gapHeight - lyricBlockHeight) / 2)
+    })
+    const collectedLyrics: LyricMark[] = pendingLyrics.map(lyric => ({
+      x: lyric.x,
+      y: (lyricBaseYBySystem[lyric.systemIndex] ?? 0) + lyric.lineIndex * LYRIC_LINE_HEIGHT,
+      text: lyric.text,
+    }))
 
     setMarks(collectedMarks)
     // VexFlow sizes its SVG in fixed pixels. The overlays scale with the
