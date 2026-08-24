@@ -5,17 +5,17 @@ import { pentatonicPitchClasses, type XylophoneBar } from './xylophoneLayout'
 
 const BAR_WIDTH = 46
 const BAR_GAP = 6
-const ROW_HEIGHT = 96
-const CHROMATIC_HEIGHT = 62
-const CHROMATIC_LIFT = 52
+const ROW_HEIGHT = 108
+const CHROMATIC_HEIGHT = 56
+const CHROMATIC_LIFT = 44
 const INSTRUMENT_HEIGHT = ROW_HEIGHT + CHROMATIC_LIFT
 
 // Mallet geometry. The head is the contact point; the shaft trails below it
 // toward the player, whether the mallet is idle or mid-strike.
-const MALLET_ZONE_HEIGHT = 70
-const MALLET_REST_Y = INSTRUMENT_HEIGHT + 28
-const MALLET_SHAFT_LENGTH = 32
-const MALLET_HEAD_RADIUS = 11
+const MALLET_ZONE_HEIGHT = 46
+const MALLET_REST_Y = INSTRUMENT_HEIGHT + 14
+const MALLET_SHAFT_LENGTH = 24
+const MALLET_HEAD_RADIUS = 10
 const TOTAL_HEIGHT = INSTRUMENT_HEIGHT + MALLET_ZONE_HEIGHT
 
 export interface XylophoneProps {
