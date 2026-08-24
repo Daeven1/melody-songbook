@@ -15,10 +15,15 @@ const SYSTEM_HEIGHT = 150
 const LEFT_PAD = 20
 const MIN_STAVE_WIDTH = 340
 const MAX_STAVE_WIDTH = 900
-/** Breathing room per note on top of VexFlow's minimum, so heads never crowd. */
-const WIDTH_PER_NOTE = 26
 /** Just enough stave past the final note for a closing barline to sit on. */
 const TRAILING_PAD = 24
+/**
+ * VexFlow's minimum packs notes as tightly as they will legally go. The page is
+ * scaled to fit the available height, so a cramped stave renders as a narrow
+ * block in the middle of a wide screen. Spreading the music out uses the width
+ * a projector actually has.
+ */
+const SPREAD = 1.8
 const NOTEHEAD_RADIUS = 13
 const LYRIC_LINE_HEIGHT = 22
 const LYRIC_TOP_GAP = 16
@@ -113,7 +118,7 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
     const contentWidth = Math.max(...probes.map(p => p.minWidth))
     const staveWidth = Math.max(
       MIN_STAVE_WIDTH,
-      Math.min(MAX_STAVE_WIDTH, noteStartOffset + contentWidth + WIDTH_PER_NOTE + TRAILING_PAD),
+      Math.min(MAX_STAVE_WIDTH, noteStartOffset + contentWidth * SPREAD + TRAILING_PAD),
     )
 
     renderer.resize(staveWidth + LEFT_PAD * 2, systems.length * systemStep + 40)
