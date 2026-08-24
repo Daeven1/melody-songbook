@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Bordun, KeyName, Song } from '../types'
 import { PlaybackEngine, type Mutes } from '../audio/engine'
 import { buildSchedule } from './schedule'
-import { activeBordunPitchesAt, activeMelodyIndexAt, countInBeatAt, scheduleEndSeconds } from './selectors'
+import { activeBordunHandAt, activeBordunPitchesAt, activeMelodyIndexAt, countInBeatAt, scheduleEndSeconds } from './selectors'
 import { useTransportClock } from './useTransportClock'
 
 export interface PlaybackOptions {
@@ -19,6 +19,8 @@ export interface PlaybackState {
   time: number
   melodyIndex: number | null
   bordunPitches: number[]
+  /** Which mallet strikes the currently-sounding bordun event, as authored per pattern. */
+  bordunHand: 'L' | 'R' | 'both' | null
   countInBeat: number | null
   play(): void
   stop(): void
@@ -60,6 +62,7 @@ export function usePlayback(options: PlaybackOptions): PlaybackState {
     time,
     melodyIndex: isPlaying ? activeMelodyIndexAt(events, time) : null,
     bordunPitches: isPlaying ? activeBordunPitchesAt(events, time) : [],
+    bordunHand: isPlaying ? activeBordunHandAt(events, time) : null,
     countInBeat: isPlaying ? countInBeatAt(events, time) : null,
     play,
     stop,

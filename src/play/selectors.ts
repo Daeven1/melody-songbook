@@ -19,6 +19,11 @@ export function activeBordunPitchesAt(events: TimedEvent[], time: number): numbe
   return activeEvent(events, time, 'bordun')?.pitches ?? []
 }
 
+/** Which mallet strikes the currently-sounding bordun event, as authored per pattern. */
+export function activeBordunHandAt(events: TimedEvent[], time: number): 'L' | 'R' | 'both' | null {
+  return activeEvent(events, time, 'bordun')?.hand ?? null
+}
+
 /** 1-based beat during the count-in, or null once the song proper has begun. */
 export function countInBeatAt(events: TimedEvent[], time: number): number | null {
   const firstSounding = events.find(e => e.kind !== 'metronome')

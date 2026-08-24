@@ -4,7 +4,7 @@ import bordunsJson from '../../src/data/borduns.json'
 import type { Song, Bordun } from '../../src/types'
 import { buildSchedule } from '../../src/play/schedule'
 import {
-  activeMelodyIndexAt, activeBordunPitchesAt, countInBeatAt, scheduleEndSeconds,
+  activeMelodyIndexAt, activeBordunPitchesAt, activeBordunHandAt, countInBeatAt, scheduleEndSeconds,
 } from '../../src/play/selectors'
 
 const SONGS = songsJson as unknown as Song[]
@@ -60,6 +60,30 @@ describe('activeBordunPitchesAt', () => {
 
   it('is empty after the song ends', () => {
     expect(activeBordunPitchesAt(events, 99)).toEqual([])
+  })
+})
+
+describe('activeBordunHandAt', () => {
+  it('is null during the count-in and after the song ends', () => {
+    expect(activeBordunHandAt(events, 1.0)).toBeNull()
+    expect(activeBordunHandAt(events, 99)).toBeNull()
+  })
+
+  it('reads the pattern\'s authored hand, not a guess from pitch count', () => {
+    // Chord is a dyad on every beat, authored 'both' throughout.
+    expect(activeBordunHandAt(events, 2.0)).toBe('both')
+  })
+
+  it('alternates hands for a single-pitch pattern — this is the bug that shipped', () => {
+    // Broken Bordun alternates one pitch at a time (L, R, L, R). A selector that
+    // infers hand from "how many pitches are sounding" sees 1 every time and
+    // would return the same hand for all four beats — silently teaching every
+    // student to strike with one mallet only.
+    const broken = BORDUNS.find(b => b.id === 'broken')!
+    const brokenEvents = buildSchedule({ song: goodnight, key: 'C', bordun: broken, bpm: 120, repeats: 1 })
+    // count-in ends at 2.0s; broken bordun is 4 quarters per bar at 120bpm (0.5s each)
+    const hands = [2.0, 2.5, 3.0, 3.5].map(t => activeBordunHandAt(brokenEvents, t))
+    expect(hands).toEqual(['L', 'R', 'L', 'R'])
   })
 })
 

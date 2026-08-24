@@ -11,7 +11,14 @@ const LEFT_PAD = 16
 const TRAILING_PAD = 20
 const MIN_STAVE_WIDTH = 260
 const MAX_STAVE_WIDTH = 520
-const NOTEHEAD_RADIUS = 12
+// Matches Notation.tsx's staff scale, so the melody and bordun staves read as
+// one consistent system rather than two different sizes of notation.
+const STAVE_LINE_SPACING = 26
+const STAVE_OPTIONS = { spacingBetweenLinesPx: STAVE_LINE_SPACING }
+const NOTEHEAD_RX = 13
+const NOTEHEAD_RY = 9
+const NOTEHEAD_TILT_DEGREES = -20
+const STAVE_HEIGHT = 180
 
 export interface BordunStaffProps {
   bordun: Bordun
@@ -68,7 +75,7 @@ export function BordunStaff({ bordun, keyName, litPitches, label }: BordunStaffP
     const probeVoice = new Voice({ numBeats: 4, beatValue: 4 })
     probeVoice.setStrict(false)
     probeVoice.addTickables(events.map(event => buildStaveNote(event).staveNote))
-    const probeStave = new Stave(LEFT_PAD, 0, MIN_STAVE_WIDTH)
+    const probeStave = new Stave(LEFT_PAD, 0, MIN_STAVE_WIDTH, STAVE_OPTIONS)
     probeStave.addClef('treble').addTimeSignature('4/4')
     const noteStartOffset = probeStave.getNoteStartX() - probeStave.getX()
     const contentWidth = new Formatter().joinVoices([probeVoice]).preCalculateMinTotalWidth([probeVoice])
@@ -76,13 +83,11 @@ export function BordunStaff({ bordun, keyName, litPitches, label }: BordunStaffP
       MIN_STAVE_WIDTH,
       Math.min(MAX_STAVE_WIDTH, noteStartOffset + contentWidth * 1.6 + TRAILING_PAD),
     )
-    const staveHeight = 110
-
     const renderer = new Renderer(host, Renderer.Backends.SVG)
-    renderer.resize(staveWidth + LEFT_PAD * 2, staveHeight)
+    renderer.resize(staveWidth + LEFT_PAD * 2, STAVE_HEIGHT)
     const context = renderer.getContext()
 
-    const stave = new Stave(LEFT_PAD, 6, staveWidth)
+    const stave = new Stave(LEFT_PAD, 6, staveWidth, STAVE_OPTIONS)
     stave.addClef('treble')
     stave.addTimeSignature('4/4')
     stave.setNoteStartX(stave.getX() + noteStartOffset)
@@ -126,7 +131,7 @@ export function BordunStaff({ bordun, keyName, litPitches, label }: BordunStaffP
 
     const staffSvg = host.querySelector('svg')
     if (staffSvg) {
-      staffSvg.setAttribute('viewBox', `0 0 ${staveWidth + LEFT_PAD * 2} ${staveHeight}`)
+      staffSvg.setAttribute('viewBox', `0 0 ${staveWidth + LEFT_PAD * 2} ${STAVE_HEIGHT}`)
       staffSvg.setAttribute('preserveAspectRatio', 'xMidYMid meet')
       staffSvg.removeAttribute('width')
       staffSvg.removeAttribute('height')
@@ -135,7 +140,7 @@ export function BordunStaff({ bordun, keyName, litPitches, label }: BordunStaffP
       staffSvg.style.display = 'block'
     }
 
-    setSize({ width: staveWidth + LEFT_PAD * 2, height: staveHeight })
+    setSize({ width: staveWidth + LEFT_PAD * 2, height: STAVE_HEIGHT })
     // litPitches deliberately excluded — see the effect's doc comment above.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bordun, keyName])
@@ -156,12 +161,13 @@ export function BordunStaff({ bordun, keyName, litPitches, label }: BordunStaffP
             const lit = litSounding.has(h.sounding)
             return (
               <g key={i}>
-                <circle
-                  cx={h.x} cy={h.y} r={NOTEHEAD_RADIUS} fill={h.fill}
+                <ellipse
+                  cx={h.x} cy={h.y} rx={NOTEHEAD_RX} ry={NOTEHEAD_RY} fill={h.fill}
+                  transform={`rotate(${NOTEHEAD_TILT_DEGREES} ${h.x} ${h.y})`}
                   stroke={lit ? '#111' : 'none'} strokeWidth={lit ? 3 : 0}
                 />
                 <text x={h.x} y={h.y} textAnchor="middle" dominantBaseline="central"
-                  fontSize={11} fontWeight="bold" fill={h.textColour}>
+                  fontSize={13} fontWeight="bold" fill={h.textColour}>
                   {h.letter}
                 </text>
               </g>

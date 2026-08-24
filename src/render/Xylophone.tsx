@@ -5,18 +5,18 @@ import { pentatonicPitchClasses, type XylophoneBar } from './xylophoneLayout'
 
 const BAR_WIDTH = 46
 const BAR_GAP = 6
-const ROW_HEIGHT = 108
-const CHROMATIC_HEIGHT = 56
-const CHROMATIC_LIFT = 44
-const INSTRUMENT_HEIGHT = ROW_HEIGHT + CHROMATIC_LIFT
+// Every bar sits on one uniform row now — the F slot shows F or F# depending
+// on the key (see xylophoneLayout.ts), so there is no separate raised bar to
+// reserve space for above the row.
+const ROW_HEIGHT = 140
 
 // Mallet geometry. The head is the contact point; the shaft trails below it
 // toward the player, whether the mallet is idle or mid-strike.
 const MALLET_ZONE_HEIGHT = 46
-const MALLET_REST_Y = INSTRUMENT_HEIGHT + 14
+const MALLET_REST_Y = ROW_HEIGHT + 14
 const MALLET_SHAFT_LENGTH = 24
 const MALLET_HEAD_RADIUS = 10
-const TOTAL_HEIGHT = INSTRUMENT_HEIGHT + MALLET_ZONE_HEIGHT
+const TOTAL_HEIGHT = ROW_HEIGHT + MALLET_ZONE_HEIGHT
 
 export interface XylophoneProps {
   bars: XylophoneBar[]
@@ -39,8 +39,7 @@ function barCentre(bars: XylophoneBar[], midi: number): { x: number; y: number }
   const bar = bars.find(b => b.midi === midi)
   if (!bar) return null
   const x = bar.position * (BAR_WIDTH + BAR_GAP) + BAR_WIDTH / 2
-  const y = (bar.isChromatic ? 0 : CHROMATIC_LIFT) + (bar.isChromatic ? CHROMATIC_HEIGHT : ROW_HEIGHT) / 2
-  return { x, y }
+  return { x, y: ROW_HEIGHT / 2 }
 }
 
 /**
@@ -120,22 +119,20 @@ export function Xylophone({ bars, litPitches, keyName, hand, label }: XylophoneP
           const isLit = lit.has(bar.midi)
           const dimmed = !inKey.has(pitchClass(bar.midi))
           const x = bar.position * (BAR_WIDTH + BAR_GAP)
-          const y = bar.isChromatic ? 0 : CHROMATIC_LIFT
-          const height = bar.isChromatic ? CHROMATIC_HEIGHT : ROW_HEIGHT
 
           return (
             <g key={bar.midi} opacity={dimmed && !isLit ? 0.22 : 1}>
               <rect
-                x={x} y={y} width={BAR_WIDTH} height={height} rx={6}
+                x={x} y={0} width={BAR_WIDTH} height={ROW_HEIGHT} rx={6}
                 fill={rgbToCss(bar.colour)}
                 stroke={isLit ? '#111' : 'rgba(0,0,0,0.25)'}
                 strokeWidth={isLit ? 4 : 1.5}
               />
               <text
-                x={x + BAR_WIDTH / 2} y={y + height / 2} textAnchor="middle" dominantBaseline="central"
-                fontSize={20} fontWeight={700} fill="#1a1a1a" pointerEvents="none"
+                x={x + BAR_WIDTH / 2} y={ROW_HEIGHT / 2} textAnchor="middle" dominantBaseline="central"
+                fontSize={24} fontWeight={700} fill="#1a1a1a" pointerEvents="none"
               >
-                {bar.letter}{bar.isChromatic ? '♯' : ''}
+                {bar.letter}
               </text>
             </g>
           )

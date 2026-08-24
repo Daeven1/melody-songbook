@@ -14,8 +14,6 @@ const SONGS = (songsJson as unknown as Song[]).slice().sort((a, b) =>
   a.level - b.level || a.title.localeCompare(b.title),
 )
 const BORDUNS = bordunsJson as unknown as Bordun[]
-const MELODY_BARS = barsForRange(...MELODY_RANGE)
-const BORDUN_BARS = barsForRange(...BORDUN_SOUNDING_RANGE)
 
 const REPEAT_CHOICES = [1, 2, 4, 8] as const
 const MIN_BPM = 40
@@ -33,9 +31,13 @@ export function App() {
   const [bpm, setBpm] = useState(song.defaultTempo)
 
   const notes = useMemo(() => flattenNotes(song, key), [song, key])
+  // The F slot shows F or F# depending on the key — students physically swap
+  // the bar, so the layout has to be recomputed whenever the key changes.
+  const melodyBars = useMemo(() => barsForRange(...MELODY_RANGE, key), [key])
+  const bordunBars = useMemo(() => barsForRange(...BORDUN_SOUNDING_RANGE, key), [key])
 
   const playback = usePlayback({ song, key, bordun, bpm, repeats, mutes })
-  const { isPlaying, melodyIndex, bordunPitches, countInBeat, play, stop } = playback
+  const { isPlaying, melodyIndex, bordunPitches, bordunHand, countInBeat, play, stop } = playback
 
   const toggle = useCallback(() => (isPlaying ? stop() : play()), [isPlaying, play, stop])
 
@@ -53,7 +55,6 @@ export function App() {
 
   const litMelodyPitch = melodyIndex === null ? null : notes[melodyIndex]?.pitch ?? null
   const melodyHand = melodyIndex === null ? null : melodyIndex % 2 === 0 ? 'L' : 'R'
-  const bordunHand = bordunPitches.length > 1 ? 'both' : bordunPitches.length === 1 ? 'R' : null
 
   return (
     <div className="h-dvh overflow-hidden flex flex-col bg-white text-neutral-900">
@@ -70,7 +71,7 @@ export function App() {
       {/* Melody instrument — what the melody half of the class plays */}
       <section className="shrink-0 h-[20vh] px-6">
         <Xylophone
-          bars={MELODY_BARS}
+          bars={melodyBars}
           litPitches={litMelodyPitch === null ? [] : [litMelodyPitch]}
           keyName={key}
           hand={melodyHand}
@@ -98,7 +99,7 @@ export function App() {
       {/* Bordun instrument — what the accompaniment half plays */}
       <section className="shrink-0 h-[16vh] px-6">
         <Xylophone
-          bars={BORDUN_BARS}
+          bars={bordunBars}
           litPitches={bordunPitches}
           keyName={key}
           hand={bordunHand}

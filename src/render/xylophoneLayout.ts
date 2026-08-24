@@ -11,66 +11,57 @@ export const BORDUN_SOUNDING_RANGE = [48, 74] as const
 const DIATONIC = [0, 2, 4, 5, 7, 9, 11]         // C D E F G A B
 const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
 
-/** The only chromatic bar the songbook ever needs. B flat never appears. */
-const CHROMATIC = new Map<number, { letter: string; below: number }>([
-  [6, { letter: 'F', below: 5 }],               // F# sits between F and G
-])
-
-export interface XylophoneBar {
-  midi: number
-  name: string
-  letter: string
-  isChromatic: boolean
-  /** Along the row. Diatonic bars are whole numbers; a chromatic bar sits at x.5. */
-  position: number
-  colour: RGB
-}
-
-export function barsForRange(lowMidi: number, highMidi: number): XylophoneBar[] {
-  const bars: XylophoneBar[] = []
-  let position = 0
-
-  for (let midi = lowMidi; midi <= highMidi; midi++) {
-    const pc = pitchClass(midi)
-    const octave = octaveOf(midi)
-    const diatonicIndex = DIATONIC.indexOf(pc)
-
-    if (diatonicIndex !== -1) {
-      const letter = LETTERS[diatonicIndex]!
-      bars.push({
-        midi, letter, name: `${letter}${octave}`,
-        isChromatic: false, position, colour: colourForPitch(midi),
-      })
-      position++
-      continue
-    }
-
-    const chromatic = CHROMATIC.get(pc)
-    if (!chromatic) continue                     // a pitch the songbook never uses
-
-    // Raised bars sit above the gap between the diatonic bar below and the next.
-    let belowPosition: number | undefined
-    for (let i = bars.length - 1; i >= 0; i--) {
-      const candidate = bars[i]!
-      if (!candidate.isChromatic && pitchClass(candidate.midi) === chromatic.below) {
-        belowPosition = candidate.position
-        break
-      }
-    }
-    if (belowPosition === undefined) continue     // its lower neighbour is out of range
-    bars.push({
-      midi, letter: chromatic.letter, name: `${chromatic.letter}#${octave}`,
-      isChromatic: true, position: belowPosition + 0.5, colour: colourForPitch(midi),
-    })
-  }
-
-  return bars.sort((a, b) => a.position - b.position)
-}
-
 const TONIC_PITCH_CLASS: Record<KeyName, number> = { C: 0, D: 2, F: 5, G: 7 }
 
 /** The five bars set out for a key: do re mi sol la. */
 export function pentatonicPitchClasses(key: KeyName): number[] {
   const tonic = TONIC_PITCH_CLASS[key]
   return [0, 2, 4, 7, 9].map(step => (tonic + step) % 12).sort((a, b) => a - b)
+}
+
+export interface XylophoneBar {
+  midi: number
+  name: string
+  /** Full display label, e.g. 'C' or 'F♯' — already carries any accidental. */
+  letter: string
+  /** Whole-number index along the row. Every bar sits on the same row. */
+  position: number
+  colour: RGB
+}
+
+/**
+ * On a real Orff instrument, a student swaps the F bar out for an F♯ bar when
+ * the key needs it — the two are never both in the rack at once. This mirrors
+ * that: the F slot shows F♯ when the key uses it, F natural otherwise, always
+ * at the same row position. B flat never appears in this songbook.
+ */
+export function barsForRange(lowMidi: number, highMidi: number, keyName: KeyName): XylophoneBar[] {
+  const usesFSharp = pentatonicPitchClasses(keyName).includes(6)
+  const bars: XylophoneBar[] = []
+  let position = 0
+
+  for (let midi = lowMidi; midi <= highMidi; midi++) {
+    const pc = pitchClass(midi)
+
+    if (pc === 5) {
+      const sounding = usesFSharp ? midi + 1 : midi
+      bars.push({
+        midi: sounding,
+        name: `${usesFSharp ? 'F#' : 'F'}${octaveOf(sounding)}`,
+        letter: usesFSharp ? 'F♯' : 'F',
+        position,
+        colour: colourForPitch(sounding),
+      })
+      position++
+      continue
+    }
+
+    const diatonicIndex = DIATONIC.indexOf(pc)
+    if (diatonicIndex === -1) continue   // F# only ever appears via the F slot above
+    const letter = LETTERS[diatonicIndex]!
+    bars.push({ midi, name: `${letter}${octaveOf(midi)}`, letter, position, colour: colourForPitch(midi) })
+    position++
+  }
+
+  return bars
 }

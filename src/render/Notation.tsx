@@ -11,7 +11,7 @@ import { phraseBoxSpans, splitPhraseBoxesBySystem } from './phraseBoxes'
 import { lyricText } from './lyrics'
 import { PHRASES } from '../data/phrases'
 
-const SYSTEM_HEIGHT = 106
+const SYSTEM_HEIGHT = 180
 const LEFT_PAD = 20
 const MIN_STAVE_WIDTH = 340
 const MAX_STAVE_WIDTH = 1400
@@ -24,11 +24,23 @@ const TRAILING_PAD = 24
  * a projector actually has.
  */
 const SPREAD = 2.4
-const NOTEHEAD_RADIUS = 13
-const LYRIC_LINE_HEIGHT = 19
-const LYRIC_TOP_GAP = 9
+/**
+ * VexFlow's default line spacing (10 units) is far too tight for a legible
+ * letter-in-notehead — a notehead sized to hold a readable letter would
+ * overlap the staff lines above and below it. Widening the spacing is what
+ * "enlarging the staff" actually means here; the notehead size follows from it.
+ */
+const STAVE_LINE_SPACING = 26
+const STAVE_OPTIONS = { spacingBetweenLinesPx: STAVE_LINE_SPACING }
+// A notehead is an ellipse wider than it is tall, tilted like an engraved one —
+// not a plain circle — sized so it clears the lines above and below a space.
+const NOTEHEAD_RX = 13
+const NOTEHEAD_RY = 9
+const NOTEHEAD_TILT_DEGREES = -20
+const LYRIC_LINE_HEIGHT = 24
+const LYRIC_TOP_GAP = 10
 const BOX_MARGIN_X = 10
-const BOX_MARGIN_Y = 20
+const BOX_MARGIN_Y = 28
 const BOX_FILL_ALPHA = 0.12
 
 export interface NotationProps {
@@ -99,7 +111,7 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
     // not, so their note-start positions differ; using the widest for all of
     // them keeps the systems vertically aligned the way the printed book does.
     const probes = systems.map((bars, systemIndex) => {
-      const probeStave = new Stave(LEFT_PAD, 0, MAX_STAVE_WIDTH)
+      const probeStave = new Stave(LEFT_PAD, 0, MAX_STAVE_WIDTH, STAVE_OPTIONS)
       probeStave.addClef('treble')
       if (systemIndex === 0) probeStave.addTimeSignature('4/4')
       const probeNotes = bars.flatMap(bar =>
@@ -139,7 +151,7 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
 
     systems.forEach((bars, systemIndex) => {
       const systemTop = systemIndex * systemStep + 10
-      const stave = new Stave(LEFT_PAD, systemTop, staveWidth)
+      const stave = new Stave(LEFT_PAD, systemTop, staveWidth, STAVE_OPTIONS)
       stave.addClef('treble')
       // No key signature, ever: accidentals are placed per note instead.
       if (systemIndex === 0) stave.addTimeSignature('4/4')
@@ -234,8 +246,8 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
           const lastNote = notes[endRange.end]
           if (!firstNote || !lastNote) return
 
-          const x1 = firstNote.getAbsoluteX() - (NOTEHEAD_RADIUS + BOX_MARGIN_X)
-          const x2 = lastNote.getAbsoluteX() + (NOTEHEAD_RADIUS + BOX_MARGIN_X)
+          const x1 = firstNote.getAbsoluteX() - (NOTEHEAD_RX + BOX_MARGIN_X)
+          const x2 = lastNote.getAbsoluteX() + (NOTEHEAD_RX + BOX_MARGIN_X)
           collectedBoxes.push({
             x: x1,
             y: boxTop,
@@ -333,13 +345,17 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
           className="absolute inset-0 w-full h-full pointer-events-none" aria-hidden="true">
           {noteheads.map((note, i) => (
             <g key={i}>
-              <circle cx={note.x} cy={note.y} r={NOTEHEAD_RADIUS} fill={note.fill} />
+              <ellipse
+                cx={note.x} cy={note.y} rx={NOTEHEAD_RX} ry={NOTEHEAD_RY}
+                fill={note.fill}
+                transform={`rotate(${NOTEHEAD_TILT_DEGREES} ${note.x} ${note.y})`}
+              />
               <text
                 x={note.x}
                 y={note.y}
                 textAnchor="middle"
                 dominantBaseline="central"
-                fontSize={11}
+                fontSize={13}
                 fontWeight="bold"
                 fill={note.textColour}
               >
@@ -349,7 +365,7 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
           ))}
 
           {lyricMarks.map((lyric, i) => (
-            <text key={i} x={lyric.x} y={lyric.y} textAnchor="middle" fontSize={14} fill="currentColor">
+            <text key={i} x={lyric.x} y={lyric.y} textAnchor="middle" fontSize={18} fill="currentColor">
               {lyric.text}
             </text>
           ))}
