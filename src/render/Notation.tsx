@@ -226,8 +226,12 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
 
   return (
     <div
-      className="relative w-full"
-      style={size.width > 0 ? { aspectRatio: `${size.width} / ${size.height}` } : undefined}
+      className="relative max-w-full max-h-full"
+      style={
+        size.width > 0
+          ? { aspectRatio: `${size.width} / ${size.height}`, height: '100%', width: 'auto' }
+          : { width: '100%' }
+      }
     >
       {/* Phrase boxes, behind the staff. */}
       {boxMarks.length > 0 && size.width > 0 && (

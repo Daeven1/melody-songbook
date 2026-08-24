@@ -107,9 +107,15 @@ export function Xylophone({ bars, litPitches, keyName, hand, label }: XylophoneP
   const mallets = malletTargets(bars, litPitches, hand, restX)
 
   return (
-    <figure className="w-full">
+    <figure className="h-full w-full">
       <figcaption className="sr-only">{label}</figcaption>
-      <svg viewBox={`0 0 ${width} ${TOTAL_HEIGHT}`} className="w-full" role="img" aria-label={label}>
+      <svg
+        viewBox={`0 0 ${width} ${TOTAL_HEIGHT}`}
+        preserveAspectRatio="xMidYMid meet"
+        className="block mx-auto h-full w-full"
+        role="img"
+        aria-label={label}
+      >
         {bars.map(bar => {
           const isLit = lit.has(bar.midi)
           const dimmed = !inKey.has(pitchClass(bar.midi))

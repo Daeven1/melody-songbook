@@ -55,8 +55,8 @@ export function App() {
   const bordunHand = bordunPitches.length > 1 ? 'both' : bordunPitches.length === 1 ? 'R' : null
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-neutral-900">
-      <header className="px-6 pt-4 pb-2 flex items-baseline justify-between">
+    <div className="h-screen overflow-hidden flex flex-col bg-white text-neutral-900">
+      <header className="shrink-0 px-6 pt-3 pb-1 flex items-baseline justify-between">
         <h1 className="text-3xl font-bold">
           {song.title}
           <span className="ml-4 text-xl font-normal opacity-60">
@@ -67,7 +67,7 @@ export function App() {
       </header>
 
       {/* Melody instrument — what the melody half of the class plays */}
-      <section className="px-6">
+      <section className="shrink-0 h-[15vh] px-6">
         <Xylophone
           bars={MELODY_BARS}
           litPitches={litMelodyPitch === null ? [] : [litMelodyPitch]}
@@ -78,7 +78,7 @@ export function App() {
       </section>
 
       {/* Notation, with the cursor */}
-      <main className="relative flex-1 px-6 py-2 flex items-center justify-center">
+      <main className="relative flex-1 min-h-0 px-6 py-1 flex items-center justify-center overflow-hidden">
         <Notation song={song} keyName={key} activeNoteIndex={melodyIndex} />
         {countInBeat !== null && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -88,7 +88,7 @@ export function App() {
       </main>
 
       {/* Bordun instrument — what the accompaniment half plays */}
-      <section className="px-6">
+      <section className="shrink-0 h-[15vh] px-6">
         <Xylophone
           bars={BORDUN_BARS}
           litPitches={bordunPitches}
@@ -98,7 +98,7 @@ export function App() {
         />
       </section>
 
-      <footer className="border-t bg-neutral-50 px-6 py-3 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
+      <footer className="shrink-0 border-t bg-neutral-50 px-6 py-2 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
         <button
           onClick={toggle}
           className={`px-8 py-3 rounded-lg text-xl font-bold text-white ${isPlaying ? 'bg-red-600' : 'bg-green-600'}`}
