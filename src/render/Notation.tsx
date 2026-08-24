@@ -242,25 +242,19 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
     const totalHeight = systems.length * systemStep + 40
     const lyricBlockHeight = maxLyricLines * LYRIC_LINE_HEIGHT
     const lyricBaseYBySystem = staveBySystem.map((stave, systemIndex) => {
+      // stave.getBottomY() is not the visible bottom staff line — VexFlow
+      // reserves extra room below it (for its own lyric annotations, which we
+      // draw ourselves instead), so it sits well past what the eye sees as the
+      // staff. getYForLine(4) is the real bottom line; pair it with the next
+      // system's real top line, exactly as the phrase-box layout above already
+      // does successfully.
+      const gapTop = stave.getYForLine(4)
       const nextStave = staveBySystem[systemIndex + 1]
       const gapBottom = nextStave ? nextStave.getYForLine(0) : totalHeight
-      const gapHeight = gapBottom - stave.getBottomY()
-      const result = maxLyricLines === 0
-        ? stave.getBottomY() + LYRIC_TOP_GAP
-        : stave.getBottomY() + Math.max(LYRIC_TOP_GAP, (gapHeight - lyricBlockHeight) / 2)
-      // eslint-disable-next-line no-console
-      console.log('LYRIC_DEBUG', {
-        systemIndex,
-        staveBottomY: stave.getBottomY(),
-        nextStaveTopLine: nextStave ? nextStave.getYForLine(0) : null,
-        totalHeight,
-        gapBottom,
-        gapHeight,
-        maxLyricLines,
-        lyricBlockHeight,
-        result,
-      })
-      return result
+      const gapHeight = gapBottom - gapTop
+      return maxLyricLines === 0
+        ? gapTop + LYRIC_TOP_GAP
+        : gapTop + Math.max(LYRIC_TOP_GAP, (gapHeight - lyricBlockHeight) / 2)
     })
     const collectedLyrics: LyricMark[] = pendingLyrics.map(lyric => ({
       x: lyric.x,
