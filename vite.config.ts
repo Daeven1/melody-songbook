@@ -22,6 +22,11 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // Take over immediately rather than waiting for every tab to close.
+        // Without this a teacher who reloads still gets yesterday's bundle,
+        // which is exactly the failure this caused in testing.
+        skipWaiting: true,
+        clientsClaim: true,
         // The main JS chunk runs ~1.8 MB; the default 2 MB-ish cutoff is too
         // tight once VexFlow and Tone are bundled in, so raise it well clear.
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
