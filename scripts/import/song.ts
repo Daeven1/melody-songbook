@@ -8,7 +8,7 @@ import { barsFromMeasures } from './bars'
 import { systemBreaksFor } from './systems'
 import { textOf } from './dom'
 
-const DEFAULT_TEMPO = 100
+const DEFAULT_TEMPO = 80
 
 /**
  * Matches a key label ('GE', 'AF#', 'DB', 'GA EDC', 'CDEGA C₁', …) and nothing else in

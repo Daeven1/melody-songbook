@@ -90,14 +90,14 @@ describe('buildSong', () => {
     expect(buildSong(CLOSET_KEY).keys.F.label).toBe('FGA')
   })
 
-  it('falls back to 100 bpm — no file in the corpus authors a tempo marking', () => {
-    expect(buildSong(GOODNIGHT).defaultTempo).toBe(100)
+  it('falls back to 80 bpm — no file in the corpus authors a tempo marking', () => {
+    expect(buildSong(GOODNIGHT).defaultTempo).toBe(80)
   })
 })
 
 describe('readTempo', () => {
-  it('falls back to 100 bpm when the document has no <Tempo> element', () => {
-    expect(readTempo(docFromXml('<museScore></museScore>'))).toBe(100)
+  it('falls back to 80 bpm when the document has no <Tempo> element', () => {
+    expect(readTempo(docFromXml('<museScore></museScore>'))).toBe(80)
   })
 
   it('converts quarter-notes-per-second to rounded BPM', () => {

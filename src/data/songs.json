@@ -1073,7 +1073,7 @@
         ]
       }
     },
-    "defaultTempo": 100
+    "defaultTempo": 80
   },
   {
     "id": "good-night-sleep-tight",
@@ -1669,7 +1669,7 @@
         "systemBreaks": []
       }
     },
-    "defaultTempo": 100
+    "defaultTempo": 80
   },
   {
     "id": "rain-rain-go-away",
@@ -2929,7 +2929,7 @@
         ]
       }
     },
-    "defaultTempo": 100
+    "defaultTempo": 80
   },
   {
     "id": "starlight-starbright",
@@ -4141,7 +4141,7 @@
         ]
       }
     },
-    "defaultTempo": 100
+    "defaultTempo": 80
   },
   {
     "id": "au-clair-de-la-lune",
@@ -5713,7 +5713,7 @@
         ]
       }
     },
-    "defaultTempo": 100
+    "defaultTempo": 80
   },
   {
     "id": "closet-key",
@@ -7069,7 +7069,7 @@
         ]
       }
     },
-    "defaultTempo": 100
+    "defaultTempo": 80
   },
   {
     "id": "hot-cross-buns",
@@ -8077,7 +8077,7 @@
         ]
       }
     },
-    "defaultTempo": 100
+    "defaultTempo": 80
   },
   {
     "id": "mary-had-a-little-lamb",
@@ -9413,7 +9413,7 @@
         ]
       }
     },
-    "defaultTempo": 100
+    "defaultTempo": 80
   },
   {
     "id": "peas-porridge-hot",
@@ -10421,7 +10421,7 @@
         ]
       }
     },
-    "defaultTempo": 100
+    "defaultTempo": 80
   },
   {
     "id": "bow-wow-wow",
@@ -11429,7 +11429,7 @@
         ]
       }
     },
-    "defaultTempo": 100
+    "defaultTempo": 80
   },
   {
     "id": "great-big-house-in-new-orleans",
@@ -12745,7 +12745,7 @@
         ]
       }
     },
-    "defaultTempo": 100
+    "defaultTempo": 80
   },
   {
     "id": "im-an-acorn",
@@ -14197,7 +14197,7 @@
         ]
       }
     },
-    "defaultTempo": 100
+    "defaultTempo": 80
   },
   {
     "id": "ece-has-a-music-room",
@@ -15513,7 +15513,7 @@
         ]
       }
     },
-    "defaultTempo": 100
+    "defaultTempo": 80
   },
   {
     "id": "pumpkin-pumpkin",
@@ -16541,7 +16541,7 @@
         ]
       }
     },
-    "defaultTempo": 100
+    "defaultTempo": 80
   },
   {
     "id": "ring-around-the-rosie",
@@ -17589,7 +17589,7 @@
         ]
       }
     },
-    "defaultTempo": 100
+    "defaultTempo": 80
   },
   {
     "id": "shake-them-simmons-down",
@@ -18973,7 +18973,7 @@
         ]
       }
     },
-    "defaultTempo": 100
+    "defaultTempo": 80
   },
   {
     "id": "teddy-bear",
@@ -20985,7 +20985,7 @@
         ]
       }
     },
-    "defaultTempo": 100
+    "defaultTempo": 80
   },
   {
     "id": "cut-the-cake",
@@ -22205,7 +22205,7 @@
         ]
       }
     },
-    "defaultTempo": 100
+    "defaultTempo": 80
   },
   {
     "id": "mo-li-hua",
@@ -24761,6 +24761,6 @@
         ]
       }
     },
-    "defaultTempo": 100
+    "defaultTempo": 80
   }
 ]
