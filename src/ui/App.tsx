@@ -69,7 +69,7 @@ export function App() {
       </header>
 
       {/* Melody instrument — what the melody half of the class plays */}
-      <section className="shrink-0 h-[14vh] px-6">
+      <section className="shrink-0 h-[16vh] px-6">
         <Xylophone
           bars={melodyBars}
           litPitches={litMelodyPitch === null ? [] : [litMelodyPitch]}
@@ -97,7 +97,7 @@ export function App() {
       </section>
 
       {/* Bordun instrument — what the accompaniment half plays */}
-      <section className="shrink-0 h-[14vh] px-6">
+      <section className="shrink-0 h-[16vh] px-6">
         <Xylophone
           bars={bordunBars}
           litPitches={bordunPitches}

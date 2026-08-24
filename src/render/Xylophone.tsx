@@ -8,11 +8,11 @@ const BAR_GAP = 6
 // Every bar sits on one uniform row now — the F slot shows F or F# depending
 // on the key (see xylophoneLayout.ts), so there is no separate raised bar to
 // reserve space for above the row.
-const ROW_HEIGHT = 140
+const ROW_HEIGHT = 150
 
 // Mallet geometry. The head is the contact point; the shaft trails below it
 // toward the player, whether the mallet is idle or mid-strike.
-const MALLET_ZONE_HEIGHT = 46
+const MALLET_ZONE_HEIGHT = 38
 const MALLET_REST_Y = ROW_HEIGHT + 14
 const MALLET_SHAFT_LENGTH = 24
 const MALLET_HEAD_RADIUS = 10

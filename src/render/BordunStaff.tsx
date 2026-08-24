@@ -22,6 +22,8 @@ const NOTEHEAD_TILT_DEGREES = -20
 const DRAW_HEIGHT = 400
 /** Breathing room kept around the trimmed content edges. */
 const CONTENT_PAD = 8
+/** VexFlow's Stem.DOWN. */
+const STEM_DOWN = -1
 
 export interface BordunStaffProps {
   bordun: Bordun
@@ -72,7 +74,13 @@ export function BordunStaff({ bordun, keyName, litPitches, label }: BordunStaffP
       const isRest = event.pitches.length === 0
       const sorted = [...event.pitches].sort((a, b) => a - b)
       const keys = isRest ? [REST_KEY] : sorted.map(bordunVexKey)
-      return { staveNote: new StaveNote({ keys, duration: bordunVexDuration(event.duration, isRest) }), sorted, isRest }
+      const staveNote = new StaveNote({ keys, duration: bordunVexDuration(event.duration, isRest) })
+      // Every bordun pitch sits above the middle line, so correct engraving puts
+      // the stem DOWN. VexFlow was choosing up, which is both wrong notation and
+      // — because stem length scales with STAVE_LINE_SPACING — a tall band of
+      // near-empty space above the staff.
+      if (!isRest) staveNote.setStemDirection(STEM_DOWN)
+      return { staveNote, sorted, isRest }
     }
 
     const probeVoice = new Voice({ numBeats: 4, beatValue: 4 })
