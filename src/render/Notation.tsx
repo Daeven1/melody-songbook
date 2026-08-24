@@ -226,10 +226,10 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
 
   return (
     <div
-      className="relative max-w-full max-h-full"
+      className="relative h-full max-w-full"
       style={
         size.width > 0
-          ? { aspectRatio: `${size.width} / ${size.height}`, height: '100%', width: 'auto' }
+          ? { aspectRatio: `${size.width} / ${size.height}`, width: 'auto' }
           : { width: '100%' }
       }
     >

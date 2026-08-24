@@ -78,7 +78,7 @@ export function App() {
       </section>
 
       {/* Notation, with the cursor */}
-      <main className="relative flex-1 min-h-0 px-6 py-1 flex items-center justify-center overflow-hidden">
+      <main className="relative flex-1 min-h-0 px-6 py-1 flex items-stretch justify-center overflow-hidden">
         <Notation song={song} keyName={key} activeNoteIndex={melodyIndex} />
         {countInBeat !== null && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
