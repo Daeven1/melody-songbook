@@ -148,6 +148,12 @@ export function BordunStaff({ bordun, keyName, litPitches, label }: BordunStaffP
     let contentTop = 0
     let contentHeight = DRAW_HEIGHT
     if (staffSvg) {
+      // VexFlow draws noteheads as glyphs from a music font, and each carries a
+      // font em-box far taller than the glyph's ink (~161 units here). We style
+      // them transparent and draw our own coloured ellipses over them, so they
+      // contribute nothing visible — but getBBox still counts those em-boxes and
+      // would size the canvas to invisible geometry. Remove them before measuring.
+      staffSvg.querySelectorAll('.vf-notehead').forEach(el => el.remove())
       const drawn = (staffSvg as unknown as SVGGraphicsElement).getBBox()
       contentTop = Math.max(0, drawn.y - CONTENT_PAD)
       contentHeight = drawn.height + CONTENT_PAD * 2
