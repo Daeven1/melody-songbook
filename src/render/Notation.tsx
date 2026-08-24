@@ -13,9 +13,12 @@ import { PHRASES } from '../data/phrases'
 
 const SYSTEM_HEIGHT = 150
 const LEFT_PAD = 20
-const STAVE_WIDTH = 900
-const NOTEHEAD_RADIUS = 9
-const LYRIC_LINE_HEIGHT = 20
+const MIN_STAVE_WIDTH = 340
+const MAX_STAVE_WIDTH = 900
+/** Breathing room per note on top of VexFlow's minimum, so heads never crowd. */
+const WIDTH_PER_NOTE = 26
+const NOTEHEAD_RADIUS = 13
+const LYRIC_LINE_HEIGHT = 22
 const LYRIC_TOP_GAP = 16
 const BOX_MARGIN_X = 10
 const BOX_MARGIN_Y = 20
@@ -84,7 +87,18 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
     const systemStep = SYSTEM_HEIGHT + maxLyricLines * LYRIC_LINE_HEIGHT
 
     const renderer = new Renderer(host, Renderer.Backends.SVG)
-    renderer.resize(STAVE_WIDTH + LEFT_PAD * 2, systems.length * systemStep + 40)
+    // Two passes: measure what each system actually needs, then draw every
+    // system at the widest of those. A 2-bar song stops where the music stops.
+    const measured = systems.map(bars => {
+      const count = bars.reduce((n, bar) => n + bar.notes.length, 0)
+      return count * (WIDTH_PER_NOTE + NOTEHEAD_RADIUS * 2) + 120
+    })
+    const staveWidth = Math.max(
+      MIN_STAVE_WIDTH,
+      Math.min(MAX_STAVE_WIDTH, Math.max(...measured)),
+    )
+
+    renderer.resize(staveWidth + LEFT_PAD * 2, systems.length * systemStep + 40)
     const context = renderer.getContext()
 
     const collectedMarks: NoteMark[] = []
@@ -98,7 +112,7 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
 
     systems.forEach((bars, systemIndex) => {
       const systemTop = systemIndex * systemStep + 10
-      const stave = new Stave(LEFT_PAD, systemTop, STAVE_WIDTH)
+      const stave = new Stave(LEFT_PAD, systemTop, staveWidth)
       stave.addClef('treble')
       // No key signature, ever: accidentals are placed per note instead.
       if (systemIndex === 0) stave.addTimeSignature('4/4')
@@ -133,7 +147,7 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
       const voice = new Voice({ numBeats: bars.length * 4, beatValue: 4 })
       voice.setStrict(false)
       voice.addTickables(notes)
-      new Formatter().joinVoices([voice]).format([voice], STAVE_WIDTH - 80)
+      new Formatter().joinVoices([voice]).format([voice], staveWidth - 80)
       voice.draw(context, stave)
 
       Beam.generateBeams(notes.filter(n => !n.isRest())).forEach(beam => {
@@ -206,7 +220,7 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
     // stop lining up with barlines. Give the staff the same viewBox mapping.
     const staffSvg = host.querySelector('svg')
     if (staffSvg) {
-      staffSvg.setAttribute('viewBox', `0 0 ${STAVE_WIDTH + LEFT_PAD * 2} ${systems.length * systemStep + 40}`)
+      staffSvg.setAttribute('viewBox', `0 0 ${staveWidth + LEFT_PAD * 2} ${systems.length * systemStep + 40}`)
       staffSvg.setAttribute('preserveAspectRatio', 'xMidYMid meet')
       staffSvg.removeAttribute('width')
       staffSvg.removeAttribute('height')
@@ -218,7 +232,7 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
     setNoteheads(collectedNoteheads)
     setLyricMarks(collectedLyrics)
     setBoxMarks(collectedBoxes)
-    setSize({ width: STAVE_WIDTH + LEFT_PAD * 2, height: systems.length * systemStep + 40 })
+    setSize({ width: staveWidth + LEFT_PAD * 2, height: systems.length * systemStep + 40 })
   }, [song, keyName])
 
   const active = activeNoteIndex === null ? null : marks[activeNoteIndex] ?? null
