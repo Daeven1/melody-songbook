@@ -242,6 +242,11 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
       const voice = new Voice({ numBeats: bars.length * 4, beatValue: 4 })
       voice.setStrict(false)
       voice.addTickables(tickables)
+      // Attach the stave BEFORE formatting. A note has no Y position until it
+      // knows its stave, and the stem-length pass below reads that position;
+      // without this it throws NoYValues, because voice.draw() would otherwise
+      // be the first thing to assign one.
+      voice.setStave(stave)
       new Formatter().joinVoices([voice]).format([voice], staveWidth - noteStartOffset - TRAILING_PAD)
 
       // Stem length has to be set after formatting, when each note knows where
