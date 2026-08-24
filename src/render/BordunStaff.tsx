@@ -125,6 +125,8 @@ export function BordunStaff({ bordun, keyName, litPitches, label }: BordunStaffP
       })
     })
 
+    // eslint-disable-next-line no-console
+    console.log('BORDUN_DEBUG', { litPitches, litSounding: [...litSounding], collectedLit: collected.map(c => c.lit) })
     setHeads(collected)
 
     const staffSvg = host.querySelector('svg')
