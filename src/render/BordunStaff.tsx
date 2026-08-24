@@ -18,7 +18,10 @@ const STAVE_OPTIONS = { spacingBetweenLinesPx: STAVE_LINE_SPACING }
 const NOTEHEAD_RX = 19
 const NOTEHEAD_RY = 12
 const NOTEHEAD_TILT_DEGREES = -20
-const STAVE_HEIGHT = 180
+/** Generous first-pass canvas; cropped to the real drawn bounds below. */
+const DRAW_HEIGHT = 400
+/** Breathing room kept around the trimmed content edges. */
+const CONTENT_PAD = 8
 
 export interface BordunStaffProps {
   bordun: Bordun
@@ -56,7 +59,7 @@ interface HeadMark {
 export function BordunStaff({ bordun, keyName, litPitches, label }: BordunStaffProps) {
   const hostRef = useRef<HTMLDivElement>(null)
   const [heads, setHeads] = useState<HeadMark[]>([])
-  const [size, setSize] = useState({ width: 0, height: 0 })
+  const [size, setSize] = useState({ top: 0, width: 0, height: 0 })
 
   useEffect(() => {
     const host = hostRef.current
@@ -84,7 +87,7 @@ export function BordunStaff({ bordun, keyName, litPitches, label }: BordunStaffP
       Math.min(MAX_STAVE_WIDTH, noteStartOffset + contentWidth * 1.6 + TRAILING_PAD),
     )
     const renderer = new Renderer(host, Renderer.Backends.SVG)
-    renderer.resize(staveWidth + LEFT_PAD * 2, STAVE_HEIGHT)
+    renderer.resize(staveWidth + LEFT_PAD * 2, DRAW_HEIGHT)
     const context = renderer.getContext()
 
     const stave = new Stave(LEFT_PAD, 6, staveWidth, STAVE_OPTIONS)
@@ -130,8 +133,17 @@ export function BordunStaff({ bordun, keyName, litPitches, label }: BordunStaffP
     setHeads(collected)
 
     const staffSvg = host.querySelector('svg')
+    // Crop to what was actually drawn. A fixed height here was both wasteful
+    // (blank reserved space above the stave) and wrong (at this line spacing
+    // the bottom stave line fell past a fixed 180, clipping it). getBBox is the
+    // real answer: it reports exactly what VexFlow put on the canvas.
+    let contentTop = 0
+    let contentHeight = DRAW_HEIGHT
     if (staffSvg) {
-      staffSvg.setAttribute('viewBox', `0 0 ${staveWidth + LEFT_PAD * 2} ${STAVE_HEIGHT}`)
+      const drawn = (staffSvg as unknown as SVGGraphicsElement).getBBox()
+      contentTop = Math.max(0, drawn.y - CONTENT_PAD)
+      contentHeight = drawn.height + CONTENT_PAD * 2
+      staffSvg.setAttribute('viewBox', `0 ${contentTop} ${staveWidth + LEFT_PAD * 2} ${contentHeight}`)
       staffSvg.setAttribute('preserveAspectRatio', 'xMidYMid meet')
       staffSvg.removeAttribute('width')
       staffSvg.removeAttribute('height')
@@ -140,13 +152,13 @@ export function BordunStaff({ bordun, keyName, litPitches, label }: BordunStaffP
       staffSvg.style.display = 'block'
     }
 
-    setSize({ width: staveWidth + LEFT_PAD * 2, height: STAVE_HEIGHT })
+    setSize({ top: contentTop, width: staveWidth + LEFT_PAD * 2, height: contentHeight })
     // litPitches deliberately excluded — see the effect's doc comment above.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bordun, keyName])
 
   const litSounding = useMemo(() => new Set(litPitches), [litPitches])
-  const viewBox = `0 0 ${size.width} ${size.height}`
+  const viewBox = `0 ${size.top} ${size.width} ${size.height}`
 
   return (
     <div

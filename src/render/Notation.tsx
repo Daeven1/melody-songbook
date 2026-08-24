@@ -45,6 +45,8 @@ const LYRIC_TOP_GAP = 10
 const BOX_MARGIN_X = 10
 const BOX_MARGIN_Y = 14
 const BOX_FILL_ALPHA = 0.12
+/** Breathing room kept around the trimmed content edges. */
+const CONTENT_PAD = 6
 
 export interface NotationProps {
   song: Song
@@ -92,7 +94,7 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
   const [noteheads, setNoteheads] = useState<NoteheadMark[]>([])
   const [lyricMarks, setLyricMarks] = useState<LyricMark[]>([])
   const [boxMarks, setBoxMarks] = useState<BoxMark[]>([])
-  const [size, setSize] = useState({ width: 0, height: 0 })
+  const [size, setSize] = useState({ top: 0, width: 0, height: 0 })
 
   useEffect(() => {
     const host = hostRef.current
@@ -150,6 +152,7 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
     const collectedNoteheads: NoteheadMark[] = []
     const collectedBoxes: BoxMark[] = []
     const staveBySystem: Stave[] = []
+    const boxTopBySystem: number[] = []
     const boxBottomBySystem: number[] = []
     // Centering a lyric line needs the top of the *next* staff, which does not
     // exist yet while this system is being drawn — collect the syllables now
@@ -256,6 +259,7 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
       // Phrase boxes, from bar boundaries to pixel spans, drawn behind the staff.
       const boxTop = systemBoxTop
       const boxBottom = systemBoxBottom
+      boxTopBySystem.push(boxTop)
       boxBottomBySystem.push(boxBottom)
 
       boxesBySystem
@@ -283,6 +287,13 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
     const lyricBlockHeight = maxLyricLines * LYRIC_LINE_HEIGHT
     // Enough room below the last system's box for its lyric block, with the
     // same top-and-bottom breathing room every other system's lyric gets.
+    // VexFlow reserves blank space ABOVE a stave's top line (for ottava marks,
+    // tempo text and the like), and that reserve scales with STAVE_LINE_SPACING
+    // — at the current spacing it was ~100 units, a fifth of the whole canvas,
+    // rendering as a large empty band between the xylophone and the music. The
+    // bottom was already trimmed to real content; the top is trimmed the same
+    // way here, so the box matches what is actually drawn in it.
+    const contentTop = Math.max(0, Math.min(...boxTopBySystem) - CONTENT_PAD)
     const lastBoxBottom = boxBottomBySystem.at(-1) ?? 0
     const totalHeight = lastBoxBottom + lyricBlockHeight + LYRIC_TOP_GAP * 2
     const lyricBaseYBySystem = staveBySystem.map((stave, systemIndex) => {
@@ -315,7 +326,7 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
     // stop lining up with barlines. Give the staff the same viewBox mapping.
     const staffSvg = host.querySelector('svg')
     if (staffSvg) {
-      staffSvg.setAttribute('viewBox', `0 0 ${staveWidth + LEFT_PAD * 2} ${totalHeight}`)
+      staffSvg.setAttribute('viewBox', `0 ${contentTop} ${staveWidth + LEFT_PAD * 2} ${totalHeight - contentTop}`)
       staffSvg.setAttribute('preserveAspectRatio', 'xMidYMid meet')
       staffSvg.removeAttribute('width')
       staffSvg.removeAttribute('height')
@@ -327,11 +338,11 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
     setNoteheads(collectedNoteheads)
     setLyricMarks(collectedLyrics)
     setBoxMarks(collectedBoxes)
-    setSize({ width: staveWidth + LEFT_PAD * 2, height: totalHeight })
+    setSize({ top: contentTop, width: staveWidth + LEFT_PAD * 2, height: totalHeight - contentTop })
   }, [song, keyName])
 
   const active = activeNoteIndex === null ? null : marks[activeNoteIndex] ?? null
-  const viewBox = `0 0 ${size.width} ${size.height}`
+  const viewBox = `0 ${size.top} ${size.width} ${size.height}`
 
   return (
     <div
