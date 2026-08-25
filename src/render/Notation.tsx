@@ -77,6 +77,18 @@ export interface NotationProps {
   activeNoteIndex?: number | null
 }
 
+/**
+ * The horizontal centre of a note's head.
+ *
+ * NOT getAbsoluteX(), which is the note's anchor — the left edge of its
+ * notehead. Drawing our ellipse there leaves it offset from the stem, which
+ * VexFlow attaches to the head's true edge. Once stems sit on the correct side
+ * (left when down, right when up), that offset reads as a detached notehead.
+ */
+function noteheadCentreX(staveNote: StaveNote): number {
+  return (staveNote.getNoteHeadBeginX() + staveNote.getNoteHeadEndX()) / 2
+}
+
 /** Where a note sits on the page, so the cursor can be laid over it each frame. */
 interface NoteMark {
   x: number
@@ -294,7 +306,7 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
       const systemBoxBottom = Math.max(...lineYs) + BOX_MARGIN_Y
 
       notes.forEach((staveNote, i) => {
-        const x = staveNote.getAbsoluteX()
+        const x = noteheadCentreX(staveNote)
         collectedMarks.push({ x, top: systemBoxTop, bottom: systemBoxBottom })
 
         const originalNote = flatNotes[i]
@@ -332,8 +344,8 @@ export function Notation({ song, keyName, activeNoteIndex = null }: NotationProp
           const lastNote = notes[endRange.end]
           if (!firstNote || !lastNote) return
 
-          const x1 = firstNote.getAbsoluteX() - (NOTEHEAD_RX + BOX_MARGIN_X)
-          const x2 = lastNote.getAbsoluteX() + (NOTEHEAD_RX + BOX_MARGIN_X)
+          const x1 = noteheadCentreX(firstNote) - (NOTEHEAD_RX + BOX_MARGIN_X)
+          const x2 = noteheadCentreX(lastNote) + (NOTEHEAD_RX + BOX_MARGIN_X)
           collectedBoxes.push({
             x: x1,
             y: boxTop,

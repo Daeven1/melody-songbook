@@ -12,10 +12,10 @@ const ROW_HEIGHT = 150
 
 // Mallet geometry. The head is the contact point; the shaft trails below it
 // toward the player, whether the mallet is idle or mid-strike.
-const MALLET_ZONE_HEIGHT = 38
-const MALLET_REST_Y = ROW_HEIGHT + 14
-const MALLET_SHAFT_LENGTH = 24
-const MALLET_HEAD_RADIUS = 10
+const MALLET_ZONE_HEIGHT = 58
+const MALLET_REST_Y = ROW_HEIGHT + 20
+const MALLET_SHAFT_LENGTH = 34
+const MALLET_HEAD_RADIUS = 17
 const TOTAL_HEIGHT = ROW_HEIGHT + MALLET_ZONE_HEIGHT
 
 export interface XylophoneProps {
@@ -80,7 +80,7 @@ function Mallet({ target, side }: { target: MalletTarget; side: 'left' | 'right'
     >
       <line
         x1={0} y1={0} x2={0} y2={MALLET_SHAFT_LENGTH}
-        stroke="#5a4632" strokeWidth={5} strokeLinecap="round"
+        stroke="#5a4632" strokeWidth={8} strokeLinecap="round"
       />
       <circle
         cx={0} cy={0} r={MALLET_HEAD_RADIUS}
@@ -89,7 +89,7 @@ function Mallet({ target, side }: { target: MalletTarget; side: 'left' | 'right'
       />
       <text
         x={0} y={1} textAnchor="middle" dominantBaseline="central"
-        fontSize={11} fontWeight={700} fill="#fff" pointerEvents="none"
+        fontSize={18} fontWeight={700} fill="#fff" pointerEvents="none"
       >
         {side === 'left' ? 'L' : 'R'}
       </text>

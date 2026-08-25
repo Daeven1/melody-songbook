@@ -17,8 +17,8 @@ const SPACE = 10
 
 const LEFT_PAD = SPACE * 0.6
 const TRAILING_PAD = SPACE * 1
-const MIN_STAVE_WIDTH = SPACE * 18
-const MAX_STAVE_WIDTH = SPACE * 32
+const MIN_STAVE_WIDTH = SPACE * 30
+const MAX_STAVE_WIDTH = SPACE * 52
 const NOTEHEAD_RX = SPACE * 0.73
 const NOTEHEAD_RY = SPACE * 0.46
 const NOTEHEAD_TILT_DEGREES = -20
@@ -97,7 +97,7 @@ export function BordunStaff({ bordun, keyName, litPitches, label }: BordunStaffP
     const contentWidth = new Formatter().joinVoices([probeVoice]).preCalculateMinTotalWidth([probeVoice])
     const staveWidth = Math.max(
       MIN_STAVE_WIDTH,
-      Math.min(MAX_STAVE_WIDTH, noteStartOffset + contentWidth * 2.4 + TRAILING_PAD),
+      Math.min(MAX_STAVE_WIDTH, noteStartOffset + contentWidth * 3.6 + TRAILING_PAD),
     )
     const renderer = new Renderer(host, Renderer.Backends.SVG)
     renderer.resize(staveWidth + LEFT_PAD * 2, DRAW_HEIGHT)
@@ -139,7 +139,8 @@ export function BordunStaff({ bordun, keyName, litPitches, label }: BordunStaffP
     const collected: HeadMark[] = []
     drawNotes.forEach(({ staveNote, sorted }) => {
       if (staveNote.isRest()) return
-      const x = staveNote.getAbsoluteX()
+      // The head's true centre, not the note's anchor — see Notation.tsx.
+      const x = (staveNote.getNoteHeadBeginX() + staveNote.getNoteHeadEndX()) / 2
       const ys = staveNote.getYs()
       sorted.forEach((writtenPitch, i) => {
         const rgb = colourForPitch(writtenPitch)
