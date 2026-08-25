@@ -29,6 +29,9 @@ const STEM_SPACES = 3.5
 const DRAW_HEIGHT = SPACE * 40
 /** Breathing room kept around the trimmed content edges. */
 const CONTENT_PAD = SPACE * 0.3
+/** How far a treble clef reaches past the staff it sits on, in spaces. */
+const CLEF_REACH_ABOVE = SPACE * 1.4
+const CLEF_REACH_BELOW = SPACE * 2.4
 
 export interface BordunStaffProps {
   bordun: Bordun
@@ -157,22 +160,38 @@ export function BordunStaff({ bordun, keyName, litPitches, label }: BordunStaffP
     setHeads(collected)
 
     const staffSvg = host.querySelector('svg')
-    // Crop to what was actually drawn. A fixed height here was both wasteful
-    // (blank reserved space above the stave) and wrong (at this line spacing
-    // the bottom stave line fell past a fixed 180, clipping it). getBBox is the
-    // real answer: it reports exactly what VexFlow put on the canvas.
+    // Crop to what is actually visible.
+    //
+    // getBBox is NOT usable here. VexFlow draws the clef, time signature,
+    // noteheads and rests as glyphs from a music font, and each carries an
+    // em-box far taller than its ink — the clef's alone ran ~4x the height of
+    // the staff it sits on. Measuring those inflates the canvas with invisible
+    // space, which then renders the staff small because the box is mostly
+    // padding. So the bounds are computed from real geometry instead: the stave
+    // lines, the stems (ordinary paths, honestly sized), our own noteheads, and
+    // a fixed allowance for how far a treble clef reaches past the staff.
     let contentTop = 0
     let contentHeight = DRAW_HEIGHT
     if (staffSvg) {
-      // VexFlow draws noteheads as glyphs from a music font, and each carries a
-      // font em-box far taller than the glyph's ink (~161 units here). We style
-      // them transparent and draw our own coloured ellipses over them, so they
-      // contribute nothing visible — but getBBox still counts those em-boxes and
-      // would size the canvas to invisible geometry. Remove them before measuring.
       staffSvg.querySelectorAll('.vf-notehead').forEach(el => el.remove())
-      const drawn = (staffSvg as unknown as SVGGraphicsElement).getBBox()
-      contentTop = Math.max(0, drawn.y - CONTENT_PAD)
-      contentHeight = drawn.height + CONTENT_PAD * 2
+
+      const topLine = stave.getYForLine(0)
+      const bottomLine = stave.getYForLine(4)
+      let top = topLine - CLEF_REACH_ABOVE
+      let bottom = bottomLine + CLEF_REACH_BELOW
+
+      staffSvg.querySelectorAll('.vf-stem').forEach(el => {
+        const box = (el as unknown as SVGGraphicsElement).getBBox()
+        top = Math.min(top, box.y)
+        bottom = Math.max(bottom, box.y + box.height)
+      })
+      collected.forEach(head => {
+        top = Math.min(top, head.y - NOTEHEAD_RY * 1.5)
+        bottom = Math.max(bottom, head.y + NOTEHEAD_RY * 1.5)
+      })
+
+      contentTop = Math.max(0, top - CONTENT_PAD)
+      contentHeight = bottom - contentTop + CONTENT_PAD
       staffSvg.setAttribute('viewBox', `0 ${contentTop} ${staveWidth + LEFT_PAD * 2} ${contentHeight}`)
       staffSvg.setAttribute('preserveAspectRatio', 'xMidYMid meet')
       staffSvg.removeAttribute('width')
