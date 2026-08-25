@@ -9,6 +9,7 @@ import { Notation } from '../render/Notation'
 import { Xylophone } from '../render/Xylophone'
 import { BordunStaff } from '../render/BordunStaff'
 import { BORDUN_SOUNDING_RANGE, MELODY_RANGE, barsForRange } from '../render/xylophoneLayout'
+import { handForPitch } from '../music/sticking'
 
 const SONGS = (songsJson as unknown as Song[]).slice().sort((a, b) =>
   a.level - b.level || a.title.localeCompare(b.title),
@@ -54,7 +55,14 @@ export function App() {
   }, [toggle])
 
   const litMelodyPitch = melodyIndex === null ? null : notes[melodyIndex]?.pitch ?? null
-  const melodyHand = melodyIndex === null ? null : melodyIndex % 2 === 0 ? 'L' : 'R'
+  // Every sounding pitch in this song and key, so a note's mallet can be chosen
+  // from where its bar sits on the instrument rather than from its position in
+  // the melody — see src/music/sticking.ts.
+  const songPitches = useMemo(
+    () => notes.map(n => n.pitch).filter((p): p is number => p !== null),
+    [notes],
+  )
+  const melodyHand = litMelodyPitch === null ? null : handForPitch(litMelodyPitch, songPitches)
 
   return (
     <div className="h-dvh overflow-hidden flex flex-col bg-white text-neutral-900">
