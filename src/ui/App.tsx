@@ -58,10 +58,10 @@ export function App() {
 
   return (
     <div className="h-dvh overflow-hidden flex flex-col bg-white text-neutral-900">
-      <header className="shrink-0 px-6 pt-1 pb-0 flex items-start justify-between">
+      <header className="shrink-0 px-6 pt-0 pb-0 flex items-start justify-between">
         <div>
-          <h1 className="text-4xl font-bold leading-none">{song.title}</h1>
-          <p className="text-lg font-normal opacity-60 leading-none mt-1">
+          <h1 className="text-3xl font-bold leading-none">{song.title}</h1>
+          <p className="text-base font-normal opacity-60 leading-none mt-0.5">
             Level {song.level} · key of {key} · {song.keys[key].label}
           </p>
         </div>

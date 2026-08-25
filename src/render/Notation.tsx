@@ -58,7 +58,13 @@ const NOTEHEAD_FONT_SIZE = SPACE * 0.62
 const STEM_SPACES_FROM_LINE = 3.5
 const STEM_SPACES_FROM_SPACE = 4
 const LYRIC_LINE_HEIGHT = SPACE * 0.95
-const LYRIC_TOP_GAP = SPACE * 0.4
+/**
+ * Clearance between a phrase box's bottom edge and the lyric baseline below it.
+ * Must exceed the font's ascent (~0.75 of LYRIC_FONT_SIZE) or the text climbs
+ * back into the box — which is what happened on the LAST system, where there is
+ * no following staff to centre against and this value is used directly.
+ */
+const LYRIC_TOP_GAP = SPACE * 1.1
 const LYRIC_FONT_SIZE = SPACE * 0.72
 const BOX_MARGIN_X = SPACE * 0.4
 const BOX_MARGIN_Y = SPACE * 0.55
