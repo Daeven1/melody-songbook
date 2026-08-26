@@ -28,3 +28,39 @@ export function handForPitch(pitch: number, songPitches: readonly number[]): Han
   if (low === high) return 'L'
   return pitch < (low + high) / 2 ? 'L' : 'R'
 }
+
+/** Where each mallet should be, whether it is striking right now or waiting. */
+export interface MalletPositions {
+  left: number | null
+  right: number | null
+}
+
+/**
+ * The bar each mallet hovers over.
+ *
+ * A mallet waits on the note it is about to play rather than parking in a
+ * fixed spot, so it travels the instrument the way a player's hand does. The
+ * hand that is currently sounding sits on its note; the other looks ahead to
+ * the next note assigned to it, falling back to its last one at the end of the
+ * piece so it does not jump back to the start.
+ */
+export function malletPositions(
+  pitches: readonly (number | null)[],
+  currentIndex: number | null,
+  songPitches: readonly number[],
+): MalletPositions {
+  const forHand = (hand: Hand): number | null => {
+    const from = currentIndex ?? 0
+    for (let i = from; i < pitches.length; i++) {
+      const pitch = pitches[i]
+      if (pitch != null && handForPitch(pitch, songPitches) === hand) return pitch
+    }
+    // Past the last note this hand plays — stay where it finished.
+    for (let i = Math.min(from, pitches.length) - 1; i >= 0; i--) {
+      const pitch = pitches[i]
+      if (pitch != null && handForPitch(pitch, songPitches) === hand) return pitch
+    }
+    return null
+  }
+  return { left: forHand('L'), right: forHand('R') }
+}

@@ -8,8 +8,9 @@ import { flattenNotes } from '../play/schedule'
 import { Notation } from '../render/Notation'
 import { Xylophone } from '../render/Xylophone'
 import { BordunStaff } from '../render/BordunStaff'
-import { BORDUN_SOUNDING_RANGE, MELODY_RANGE, barsForRange } from '../render/xylophoneLayout'
-import { handForPitch } from '../music/sticking'
+import { barsForRange, rangeForPitches } from '../render/xylophoneLayout'
+import { malletPositions } from '../music/sticking'
+import { BORDUN_PLAYBACK_SHIFT } from '../play/schedule'
 
 const SONGS = (songsJson as unknown as Song[]).slice().sort((a, b) =>
   a.level - b.level || a.title.localeCompare(b.title),
@@ -32,13 +33,32 @@ export function App() {
   const [bpm, setBpm] = useState(song.defaultTempo)
 
   const notes = useMemo(() => flattenNotes(song, key), [song, key])
+
+  // Every sounding pitch this piece needs, so each instrument can be set up
+  // with just the scale the music uses — one octave unless the music genuinely
+  // spans more — rather than every bar any song might ever want.
+  const melodyPitches = useMemo(
+    () => notes.map(n => n.pitch).filter((p): p is number => p !== null),
+    [notes],
+  )
+  const bordunSoundingPitches = useMemo(
+    () => bordun.keys[key].flatMap(e => e.pitches).map(p => p + BORDUN_PLAYBACK_SHIFT),
+    [bordun, key],
+  )
+
   // The F slot shows F or F# depending on the key — students physically swap
   // the bar, so the layout has to be recomputed whenever the key changes.
-  const melodyBars = useMemo(() => barsForRange(...MELODY_RANGE, key), [key])
-  const bordunBars = useMemo(() => barsForRange(...BORDUN_SOUNDING_RANGE, key), [key])
+  const melodyBars = useMemo(
+    () => barsForRange(...rangeForPitches(melodyPitches, key), key),
+    [melodyPitches, key],
+  )
+  const bordunBars = useMemo(
+    () => barsForRange(...rangeForPitches(bordunSoundingPitches, key), key),
+    [bordunSoundingPitches, key],
+  )
 
   const playback = usePlayback({ song, key, bordun, bpm, repeats, mutes })
-  const { isPlaying, melodyIndex, bordunPitches, bordunHand, countInBeat, play, stop } = playback
+  const { isPlaying, melodyIndex, bordunPitches, countInBeat, play, stop } = playback
 
   const toggle = useCallback(() => (isPlaying ? stop() : play()), [isPlaying, play, stop])
 
@@ -55,14 +75,38 @@ export function App() {
   }, [toggle])
 
   const litMelodyPitch = melodyIndex === null ? null : notes[melodyIndex]?.pitch ?? null
-  // Every sounding pitch in this song and key, so a note's mallet can be chosen
-  // from where its bar sits on the instrument rather than from its position in
-  // the melody — see src/music/sticking.ts.
-  const songPitches = useMemo(
-    () => notes.map(n => n.pitch).filter((p): p is number => p !== null),
-    [notes],
+
+  // Each mallet waits on the note it is about to play and travels the
+  // instrument with the music — see src/music/sticking.ts.
+  const melodyMallets = useMemo(
+    () => malletPositions(notes.map(n => n.pitch), melodyIndex, melodyPitches),
+    [notes, melodyIndex, melodyPitches],
   )
-  const melodyHand = litMelodyPitch === null ? null : handForPitch(litMelodyPitch, songPitches)
+
+  // The bordun's hands are authored per pattern, so its mallets follow the
+  // pattern's own assignment rather than the nearest-mallet rule.
+  const bordunMallets = useMemo(() => {
+    const events = bordun.keys[key]
+    const shifted = (pitches: number[]) => pitches.map(p => p + BORDUN_PLAYBACK_SHIFT)
+    const forHand = (hand: 'L' | 'R'): number | null => {
+      // Prefer whatever that hand is sounding right now; otherwise its first
+      // note in the pattern, so it is already waiting in the right place.
+      const sounding = events.find(
+        e => e.pitches.length > 0
+          && shifted(e.pitches).some(p => bordunPitches.includes(p))
+          && (e.hand === hand || e.hand === 'both'),
+      )
+      const chooseFrom = sounding ?? events.find(e => e.pitches.length > 0 && (e.hand === hand || e.hand === 'both'))
+      if (!chooseFrom) return null
+      const pitches = shifted(chooseFrom.pitches).sort((a, b) => a - b)
+      // A two-handed event splits low to the left hand, high to the right.
+      if (chooseFrom.hand === 'both' && pitches.length > 1) {
+        return hand === 'L' ? pitches[0]! : pitches[pitches.length - 1]!
+      }
+      return pitches[0] ?? null
+    }
+    return { left: forHand('L'), right: forHand('R') }
+  }, [bordun, key, bordunPitches])
 
   return (
     <div className="h-dvh overflow-hidden flex flex-col bg-white text-neutral-900">
@@ -82,7 +126,7 @@ export function App() {
           bars={melodyBars}
           litPitches={litMelodyPitch === null ? [] : [litMelodyPitch]}
           keyName={key}
-          hand={melodyHand}
+          mallets={melodyMallets}
           label="Melody xylophone"
         />
       </section>
@@ -110,7 +154,7 @@ export function App() {
           bars={bordunBars}
           litPitches={bordunPitches}
           keyName={key}
-          hand={bordunHand}
+          mallets={bordunMallets}
           label="Bordun xylophone"
         />
       </section>

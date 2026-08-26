@@ -23,8 +23,12 @@ export interface XylophoneProps {
   /** Sounding pitches to light right now. */
   litPitches: number[]
   keyName: KeyName
-  /** Which mallet struck, for the strike marker. */
-  hand: 'L' | 'R' | 'both' | null
+  /**
+   * The bar each mallet hovers over — the note it is playing, or the one it is
+   * about to play. A mallet with nothing to play is hidden rather than parked
+   * somewhere arbitrary.
+   */
+  mallets: { left: number | null; right: number | null }
   label: string
 }
 
@@ -43,32 +47,18 @@ function barCentre(bars: XylophoneBar[], midi: number): { x: number; y: number }
 }
 
 /**
- * Assigns the sounding pitches to a left and right mallet target.
- * `'both'` splits a chord low-to-high across the two hands (mirroring how the
- * bars are laid out left-to-right); a single hand strikes and the other rests.
+ * Places one mallet over its bar.
+ *
+ * A waiting mallet sits just below its bar rather than in a fixed parking
+ * spot, so it tracks the music around the instrument; a striking one moves up
+ * onto the bar's centre.
  */
-function malletTargets(bars: XylophoneBar[], litPitches: number[], hand: 'L' | 'R' | 'both' | null, restX: { left: number; right: number }): { left: MalletTarget; right: MalletTarget } {
-  const idleLeft: MalletTarget = { x: restX.left, y: MALLET_REST_Y, struck: false }
-  const idleRight: MalletTarget = { x: restX.right, y: MALLET_REST_Y, struck: false }
-
-  if (!hand || litPitches.length === 0) return { left: idleLeft, right: idleRight }
-
-  const strike = (midi: number): MalletTarget => {
-    const centre = barCentre(bars, midi)
-    return centre ? { x: centre.x, y: centre.y, struck: true } : idleLeft
-  }
-
-  if (hand === 'both') {
-    const sorted = litPitches.slice().sort((a, b) => a - b)
-    const lowest = sorted[0]
-    const highest = sorted[sorted.length - 1]
-    if (lowest === undefined || highest === undefined) return { left: idleLeft, right: idleRight }
-    return { left: strike(lowest), right: strike(highest) }
-  }
-
-  const pitch = litPitches[0]
-  if (pitch === undefined) return { left: idleLeft, right: idleRight }
-  return hand === 'L' ? { left: strike(pitch), right: idleRight } : { left: idleLeft, right: strike(pitch) }
+function malletTarget(bars: XylophoneBar[], pitch: number | null, litPitches: number[]): MalletTarget | null {
+  if (pitch === null) return null
+  const centre = barCentre(bars, pitch)
+  if (!centre) return null
+  const struck = litPitches.includes(pitch)
+  return { x: centre.x, y: struck ? centre.y : MALLET_REST_Y, struck }
 }
 
 function Mallet({ target, side }: { target: MalletTarget; side: 'left' | 'right' }) {
@@ -97,13 +87,15 @@ function Mallet({ target, side }: { target: MalletTarget; side: 'left' | 'right'
   )
 }
 
-export function Xylophone({ bars, litPitches, keyName, hand, label }: XylophoneProps) {
+export function Xylophone({ bars, litPitches, keyName, mallets, label }: XylophoneProps) {
   const inKey = new Set(pentatonicPitchClasses(keyName))
   const lit = new Set(litPitches)
   const span = Math.max(...bars.map(b => b.position)) + 1
   const width = span * (BAR_WIDTH + BAR_GAP)
-  const restX = { left: width * 0.3, right: width * 0.7 }
-  const mallets = malletTargets(bars, litPitches, hand, restX)
+  const malletTargets = {
+    left: malletTarget(bars, mallets.left, litPitches),
+    right: malletTarget(bars, mallets.right, litPitches),
+  }
 
   return (
     <figure className="h-full w-full">
@@ -137,10 +129,9 @@ export function Xylophone({ bars, litPitches, keyName, hand, label }: XylophoneP
             </g>
           )
         })}
-        <Mallet target={mallets.left} side="left" />
-        <Mallet target={mallets.right} side="right" />
+        {malletTargets.left && <Mallet target={malletTargets.left} side="left" />}
+        {malletTargets.right && <Mallet target={malletTargets.right} side="right" />}
       </svg>
-      {hand && <p className="text-center text-sm opacity-70">{hand === 'both' ? 'both hands' : `${hand} hand`}</p>}
     </figure>
   )
 }
