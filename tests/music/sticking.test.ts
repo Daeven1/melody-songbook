@@ -1,73 +1,174 @@
 import { describe, it, expect } from 'vitest'
-import { handForPitch, malletPositions } from '../../src/music/sticking'
+import songsJson from '../../src/data/songs.json'
+import { AUTHORED_STICKING, TWO_NOTE_SONGS } from '../../src/data/sticking'
+import { malletPositions, phrasesOf, stickingForPhrase, stickingForSong } from '../../src/music/sticking'
 
-describe('handForPitch', () => {
-  // Frog in the Meadow in C: sol-mi, E4 = 64 and G4 = 67.
-  const solMi = [64, 67]
+const SONGS = songsJson as unknown as {
+  id: string
+  keys: Record<string, { bars: { notes: { pitch: number | null }[] }[] }>
+}[]
 
-  it('gives each of two pitches its own mallet', () => {
-    expect(handForPitch(64, solMi)).toBe('L')
-    expect(handForPitch(67, solMi)).toBe('R')
+const pitchesOf = (id: string, key = 'C') =>
+  SONGS.find(s => s.id === id)!.keys[key]!.bars.flatMap(b => b.notes.map(n => n.pitch))
+
+const soundingOf = (id: string, key = 'C') =>
+  pitchesOf(id, key).filter((p): p is number => p !== null)
+
+const TONIC: Record<string, number> = { C: 0, D: 2, F: 5, G: 7 }
+
+/** Hands as a compact string, for comparing against Lacie's table by eye. */
+const handsOf = (id: string, key = 'C') =>
+  stickingForSong(id, pitchesOf(id, key), TONIC[key]!)
+    .filter(h => h !== null)
+    .join('')
+
+describe('authored sticking aligns with the real songs', () => {
+  it('every authored sequence divides its song exactly', () => {
+    // A sequence covering one verse is tiled to fill. If it does not divide the
+    // note count, the transcription is off and the sticking would silently
+    // drift out of step with the melody.
+    for (const [id, entry] of Object.entries(AUTHORED_STICKING)) {
+      if (!entry.complete) continue
+      const count = soundingOf(id).length
+      expect(
+        count % entry.hands.length,
+        `${id}: ${entry.hands.length} hands does not divide ${count} notes`,
+      ).toBe(0)
+    }
   })
 
-  it('always returns the same hand for the same pitch — the actual bug', () => {
-    // A repeated note must not alternate mallets.
-    const repeated = [67, 67, 67, 64, 64]
-    const hands = repeated.map(p => handForPitch(p, repeated))
-    expect(hands).toEqual(['R', 'R', 'R', 'L', 'L'])
+  it('gives every sounding note a hand and every rest none', () => {
+    for (const song of SONGS) {
+      const pitches = pitchesOf(song.id)
+      const hands = stickingForSong(song.id, pitches, 0)
+      expect(hands.length).toBe(pitches.length)
+      pitches.forEach((pitch, i) => {
+        if (pitch === null) expect(hands[i], `${song.id} rest at ${i}`).toBeNull()
+        else expect(hands[i], `${song.id} note at ${i}`).not.toBeNull()
+      })
+    }
+  })
+})
+
+describe("Lacie's examples", () => {
+  it('Bow Wow Wow — do-do-do left, mi-mi-mi-mi alternating, mi-re-do crossover', () => {
+    //  do-do-do | mi-mi-mi-mi | so-so-so-la-so-mi-do  mi-re-do
+    expect(handsOf('bow-wow-wow')).toBe('LLL' + 'RLRL' + 'RRRRRLL' + 'RLR')
   })
 
-  it('splits a five-note pentatonic by the instrument layout', () => {
-    // C D E G A — low bars left, high bars right.
-    const pentatonic = [60, 62, 64, 67, 69]
-    expect(pentatonic.map(p => handForPitch(p, pentatonic))).toEqual(['L', 'L', 'L', 'R', 'R'])
+  it('Teddy Bear — the anchor on mi, same nine hands each phrase', () => {
+    expect(handsOf('teddy-bear')).toBe('RRLRRLRLR'.repeat(4))
   })
 
-  it('sends each note to the nearer mallet when there are more than two', () => {
-    // Three notes: the outer two are clearly one per hand, and the middle note
-    // goes to whichever mallet is nearer rather than forcing an alternation.
-    const three = [60, 64, 72]           // C4, E4, C5 — midpoint 66
-    expect(handForPitch(60, three)).toBe('L')
-    expect(handForPitch(64, three)).toBe('L')   // nearer the low end
-    expect(handForPitch(72, three)).toBe('R')
+  it('Great Big House — left anchored on mi throughout', () => {
+    expect(handsOf('great-big-house-in-new-orleans'))
+      .toBe('LRRRLRR' + 'LRRRLR' + 'LRRRLRR' + 'LRLRL')
   })
 
-  it('handles a single-pitch song without dividing by zero', () => {
-    expect(handForPitch(67, [67, 67])).toBe('L')
+  it('Au Clair de la Lune — the same re takes different hands in different phrases', () => {
+    //  do-do-do | re-mi-re | do-mi-re-re-do   ... then the verse repeats
+    const hands = handsOf('au-clair-de-la-lune')
+    expect(hands).toBe('LLLRRRLRLLL'.repeat(2))
+    // The 4th note is re (right), the 9th is also re (left) — the case that
+    // rules out any pitch-to-hand mapping.
+    expect(hands[3]).toBe('R')
+    expect(hands[8]).toBe('L')
   })
 
-  it('ignores rests, which arrive as a filtered-out pitch list', () => {
-    expect(handForPitch(67, [64, 67])).toBe('R')
+  it('mi-mi-re-re-do is right-right-left-left-right in all three songs that use it', () => {
+    for (const id of ['ece-has-a-music-room', 'shake-them-simmons-down', 'cut-the-cake']) {
+      expect(handsOf(id).slice(-5), id).toBe('RRLLR')
+    }
+  })
+
+  it('Ring Around the Rosie', () => {
+    expect(handsOf('ring-around-the-rosie')).toBe('RRLRRL' + 'RRLRRL' + 'RLRL' + 'RRL')
+  })
+
+  it('Mo Li Hua', () => {
+    expect(handsOf('mo-li-hua'))
+      .toBe('LLLLRRLLLRL' + 'LLLLRRLLLRL' + 'RRRLRRRL' + 'RLRRRLRLRL')
+  })
+
+  it('two-note songs put one hand on each note, never alternating', () => {
+    for (const id of TWO_NOTE_SONGS) {
+      const song = SONGS.find(s => s.id === id)
+      if (!song) continue
+      const sounding = soundingOf(id)
+      const low = Math.min(...sounding)
+      const hands = stickingForSong(id, pitchesOf(id), 0).filter(h => h !== null)
+      sounding.forEach((pitch, i) => {
+        expect(hands[i], `${id} note ${i}`).toBe(pitch === low ? 'L' : 'R')
+      })
+    }
+  })
+
+  it('Closet Key treats do and re as left, mi as right', () => {
+    const hands = handsOf('closet-key')
+    const sounding = soundingOf('closet-key')
+    sounding.forEach((pitch, i) => {
+      const degree = ((pitch - 60) % 12 + 12) % 12
+      expect(hands[i], `note ${i} degree ${degree}`).toBe(degree === 4 ? 'R' : 'L')
+    })
+  })
+
+  it('sticking is relative — the same hands in every key', () => {
+    for (const song of SONGS) {
+      const inC = handsOf(song.id, 'C')
+      for (const key of ['D', 'F', 'G']) {
+        expect(handsOf(song.id, key), `${song.id} in ${key}`).toBe(inC)
+      }
+    }
+  })
+})
+
+describe('phrasesOf', () => {
+  it('splits on rests, which is how the table is grouped', () => {
+    expect(phrasesOf([60, 62, null, 64, 65])).toEqual([
+      { indices: [0, 1], pitches: [60, 62] },
+      { indices: [2, 3], pitches: [64, 65] },
+    ])
+  })
+
+  it('matches the phrase groupings in the songs — Teddy Bear is four nines', () => {
+    expect(phrasesOf(pitchesOf('teddy-bear')).map(p => p.pitches.length)).toEqual([9, 9, 9, 9])
+  })
+})
+
+describe('stickingForPhrase — the fallback rules', () => {
+  it('two notes get one hand each', () => {
+    expect(stickingForPhrase([64, 67, 64, 67])).toEqual(['L', 'R', 'L', 'R'])
+  })
+
+  it('a single repeated note alternates', () => {
+    expect(stickingForPhrase([67, 67, 67])).toEqual(['L', 'R', 'L'])
+  })
+
+  it('anchors the left hand on a low note that keeps returning', () => {
+    // mi-so-so-la-mi-so-so — Lacie's own example of the anchor rule.
+    expect(stickingForPhrase([64, 67, 67, 69, 64, 67, 67]))
+      .toEqual(['L', 'R', 'R', 'R', 'L', 'R', 'R'])
+  })
+
+  it('otherwise alternates by group, so a repeated note keeps its hand', () => {
+    const hands = stickingForPhrase([76, 76, 74, 74, 72])
+    expect(hands).toEqual(['R', 'R', 'L', 'L', 'R'])
   })
 })
 
 describe('malletPositions', () => {
-  // Frog in the Meadow, key of C: G G G E E | G G G E
-  const melody = [67, 67, 67, 64, 64, 67, 67, 67, 64]
-  const songPitches = melody
+  const pitches = [67, 67, 67, 64, 64]
+  const hands = stickingForSong('frog-in-the-meadow', pitches, 0)
 
-  it('rests each mallet on the first note it will play, before playback', () => {
-    expect(malletPositions(melody, null, songPitches)).toEqual({ left: 64, right: 67 })
-  })
-
-  it('keeps the sounding hand on its note and looks ahead with the other', () => {
-    // Index 0 is a G (right hand). Left should already be waiting on the E.
-    expect(malletPositions(melody, 0, songPitches)).toEqual({ left: 64, right: 67 })
+  it('rests each mallet on the first note it will play', () => {
+    expect(malletPositions(pitches, hands, null)).toEqual({ left: 64, right: 67 })
   })
 
   it('does not send a mallet back to the start once its notes are done', () => {
-    // Past the final E, the left mallet stays on it rather than jumping away.
-    expect(malletPositions(melody, melody.length, songPitches)).toEqual({ left: 64, right: 67 })
+    expect(malletPositions(pitches, hands, pitches.length)).toEqual({ left: 64, right: 67 })
   })
 
   it('leaves a mallet unplaced when the music never uses that hand', () => {
-    const oneNote = [67, 67]
-    // A single-pitch song is all left hand, so the right has nothing to hover over.
-    expect(malletPositions(oneNote, null, oneNote)).toEqual({ left: 67, right: null })
-  })
-
-  it('skips rests when looking ahead', () => {
-    const withRests = [null, 67, null, 64]
-    expect(malletPositions(withRests, 0, [67, 64])).toEqual({ left: 64, right: 67 })
+    expect(malletPositions([67, 67], ['L', 'L'], null)).toEqual({ left: 67, right: null })
   })
 })

@@ -8,8 +8,8 @@ import { flattenNotes } from '../play/schedule'
 import { Notation } from '../render/Notation'
 import { Xylophone } from '../render/Xylophone'
 import { BordunStaff } from '../render/BordunStaff'
-import { barsForRange, rangeForPitches } from '../render/xylophoneLayout'
-import { malletPositions } from '../music/sticking'
+import { TONIC_PITCH_CLASS, barsForRange, rangeForPitches } from '../render/xylophoneLayout'
+import { malletPositions, stickingForSong } from '../music/sticking'
 import { BORDUN_PLAYBACK_SHIFT } from '../play/schedule'
 
 const SONGS = (songsJson as unknown as Song[]).slice().sort((a, b) =>
@@ -76,11 +76,19 @@ export function App() {
 
   const litMelodyPitch = melodyIndex === null ? null : notes[melodyIndex]?.pitch ?? null
 
+  // Which hand plays each note. Authored by Lacie per song, because sticking
+  // is chosen per phrase rather than per pitch — see src/music/sticking.ts and
+  // docs/mallet-sticking-rules.md.
+  const melodyHands = useMemo(
+    () => stickingForSong(song.id, notes.map(n => n.pitch), TONIC_PITCH_CLASS[key]),
+    [song.id, notes, key],
+  )
+
   // Each mallet waits on the note it is about to play and travels the
-  // instrument with the music — see src/music/sticking.ts.
+  // instrument with the music.
   const melodyMallets = useMemo(
-    () => malletPositions(notes.map(n => n.pitch), melodyIndex, melodyPitches),
-    [notes, melodyIndex, melodyPitches],
+    () => malletPositions(notes.map(n => n.pitch), melodyHands, melodyIndex),
+    [notes, melodyHands, melodyIndex],
   )
 
   // The bordun's hands are authored per pattern, so its mallets follow the

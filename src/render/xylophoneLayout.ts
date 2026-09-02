@@ -15,7 +15,7 @@ export const BORDUN_SOUNDING_RANGE = [48, 74] as const
 const DIATONIC = [0, 2, 4, 5, 7, 9, 11]         // C D E F G A B
 const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
 
-const TONIC_PITCH_CLASS: Record<KeyName, number> = { C: 0, D: 2, F: 5, G: 7 }
+export const TONIC_PITCH_CLASS: Record<KeyName, number> = { C: 0, D: 2, F: 5, G: 7 }
 
 /** The five bars set out for a key: do re mi sol la. */
 export function pentatonicPitchClasses(key: KeyName): number[] {

@@ -1,32 +1,140 @@
 /**
  * Which mallet plays which note.
  *
- * The rule is per-PITCH, not per-position: a given bar always belongs to the
- * same hand for the whole song. Choosing by note index instead (alternating
- * L, R, L, R down the melody) looks right on a two-note song only by accident
- * — the moment a pitch repeats, the two mallets alternate on one bar, which is
- * not how anyone plays a xylophone.
+ * Sticking is decided PER PHRASE with lookahead to what comes next — not per
+ * pitch. Lacie's examples settle this: Au Clair de la Lune plays `re` with the
+ * right hand in one phrase and the left in another, and Bow Wow Wow does the
+ * same with `do`. Any function from pitch to hand is therefore wrong, and two
+ * earlier versions of this file were wrong in exactly that way.
  *
- * The split follows the instrument's physical layout: bars run low on the left
- * to high on the right, so the left mallet covers the lower half of the song's
- * range and the right mallet the upper half. With only two notes that gives one
- * mallet per bar; with more, each note simply goes to whichever mallet is
- * nearer — the same rule, since each mallet rests over its own half.
+ * So her authored sequences are the source of truth (src/data/sticking.ts), and
+ * the rules below only fill the gaps where her table stops short. The rules are
+ * documented in docs/mallet-sticking-rules.md.
  */
+import { AUTHORED_STICKING, CLOSET_KEY_LEFT_DEGREES, TWO_NOTE_SONGS } from '../data/sticking'
+
 export type Hand = 'L' | 'R'
 
+/** A run of consecutive sounding notes, bounded by rests. */
+export interface Phrase {
+  /** Indices into the sounding-note list. */
+  indices: number[]
+  pitches: number[]
+}
+
+/** Splits a note list into rest-delimited phrases, which is how Lacie groups them. */
+export function phrasesOf(pitches: readonly (number | null)[]): Phrase[] {
+  const phrases: Phrase[] = []
+  let current: Phrase = { indices: [], pitches: [] }
+  let soundingIndex = 0
+  for (const pitch of pitches) {
+    if (pitch === null) {
+      if (current.indices.length) phrases.push(current)
+      current = { indices: [], pitches: [] }
+      continue
+    }
+    current.indices.push(soundingIndex++)
+    current.pitches.push(pitch)
+  }
+  if (current.indices.length) phrases.push(current)
+  return phrases
+}
+
 /**
- * Splits at the midpoint of the song's pitch RANGE rather than at the median
- * note. For sol-mi (E and G) that puts one pitch in each hand, which is the
- * case this rule exists for.
+ * Sticking for one phrase, by rule. Used only where Lacie has not authored it.
+ * Priority follows docs/mallet-sticking-rules.md.
  */
-export function handForPitch(pitch: number, songPitches: readonly number[]): Hand {
-  const sounding = songPitches.filter(p => Number.isFinite(p))
-  if (sounding.length === 0) return 'L'
-  const low = Math.min(...sounding)
-  const high = Math.max(...sounding)
-  if (low === high) return 'L'
-  return pitch < (low + high) / 2 ? 'L' : 'R'
+export function stickingForPhrase(phrase: readonly number[]): Hand[] {
+  if (phrase.length === 0) return []
+  const distinct = [...new Set(phrase)].sort((a, b) => a - b)
+
+  // Rule 1 — two notes: one hand each, never alternating.
+  if (distinct.length === 2) {
+    return phrase.map(p => (p === distinct[0] ? 'L' : 'R'))
+  }
+
+  // Rule 3 — a single repeated pitch simply alternates.
+  if (distinct.length === 1) {
+    return phrase.map((_, i) => (i % 2 === 0 ? 'L' : 'R'))
+  }
+
+  // Rule 2 — anchor: a low note returned to repeatedly stays in the left hand
+  // while the right takes everything above it. Detected as the lowest pitch
+  // recurring with higher notes in between.
+  const lowest = distinct[0]!
+  const lowPositions = phrase.flatMap((p, i) => (p === lowest ? [i] : []))
+  const recursNonAdjacently = lowPositions.length >= 2
+    && lowPositions.some((pos, i) => i > 0 && pos - lowPositions[i - 1]! > 1)
+  if (recursNonAdjacently) {
+    return phrase.map(p => (p === lowest ? 'L' : 'R'))
+  }
+
+  // Rule 5 — otherwise alternate by group of repeated notes, so a repeated
+  // note keeps one hand and the hand changes when the note does.
+  const hands: Hand[] = []
+  let hand: Hand = phrase[0]! <= (distinct[0]! + distinct[distinct.length - 1]!) / 2 ? 'L' : 'R'
+  phrase.forEach((pitch, i) => {
+    if (i > 0 && pitch !== phrase[i - 1]) hand = hand === 'L' ? 'R' : 'L'
+    hands.push(hand)
+  })
+  return hands
+}
+
+/** Scale degree above the tonic, 0-11. */
+function degreeAbove(pitch: number, tonicPitchClass: number): number {
+  return (((pitch - tonicPitchClass) % 12) + 12) % 12
+}
+
+/**
+ * The hand for every note of a song, aligned to the note list — null at rests,
+ * where no mallet plays.
+ */
+export function stickingForSong(
+  songId: string,
+  pitches: readonly (number | null)[],
+  tonicPitchClass: number,
+): (Hand | null)[] {
+  const sounding = pitches.filter((p): p is number => p !== null)
+  const hands = new Array<Hand | null>(sounding.length)
+
+  const authored = AUTHORED_STICKING[songId]
+  if (authored && authored.hands.length > 0) {
+    // A sequence covering one verse of a repeating song is tiled to fill.
+    for (let i = 0; i < sounding.length; i++) {
+      const h = authored.hands[i % authored.hands.length]
+      hands[i] = i < authored.hands.length || authored.hands.length === 0 || sounding.length % authored.hands.length === 0
+        ? h ?? null
+        : null
+    }
+  }
+
+  if (TWO_NOTE_SONGS.has(songId) && sounding.length > 0) {
+    const low = Math.min(...sounding)
+    for (let i = 0; i < sounding.length; i++) hands[i] = sounding[i] === low ? 'L' : 'R'
+  }
+
+  if (songId === 'closet-key') {
+    for (let i = 0; i < sounding.length; i++) {
+      hands[i] = CLOSET_KEY_LEFT_DEGREES.has(degreeAbove(sounding[i]!, tonicPitchClass)) ? 'L' : 'R'
+    }
+  }
+
+  // Anything still unfilled — a song with no entry, or the tail of a partly
+  // specified one — falls back to the rules, phrase by phrase.
+  if (hands.some(h => h == null)) {
+    for (const phrase of phrasesOf(pitches)) {
+      const byRule = stickingForPhrase(phrase.pitches)
+      phrase.indices.forEach((soundingIndex, i) => {
+        if (hands[soundingIndex] == null) hands[soundingIndex] = byRule[i] ?? 'L'
+      })
+    }
+  }
+
+  // Re-expand to the full note list, leaving rests empty.
+  const out: (Hand | null)[] = []
+  let s = 0
+  for (const pitch of pitches) out.push(pitch === null ? null : hands[s++] ?? null)
+  return out
 }
 
 /** Where each mallet should be, whether it is striking right now or waiting. */
@@ -38,27 +146,23 @@ export interface MalletPositions {
 /**
  * The bar each mallet hovers over.
  *
- * A mallet waits on the note it is about to play rather than parking in a
- * fixed spot, so it travels the instrument the way a player's hand does. The
- * hand that is currently sounding sits on its note; the other looks ahead to
- * the next note assigned to it, falling back to its last one at the end of the
- * piece so it does not jump back to the start.
+ * A mallet waits on the note it is about to play rather than parking in a fixed
+ * spot, so it travels the instrument the way a player's hand does. The hand
+ * sounding now sits on its note; the other looks ahead to its next one, and
+ * stays where it finished rather than jumping back to the start.
  */
 export function malletPositions(
   pitches: readonly (number | null)[],
+  hands: readonly (Hand | null)[],
   currentIndex: number | null,
-  songPitches: readonly number[],
 ): MalletPositions {
   const forHand = (hand: Hand): number | null => {
     const from = currentIndex ?? 0
     for (let i = from; i < pitches.length; i++) {
-      const pitch = pitches[i]
-      if (pitch != null && handForPitch(pitch, songPitches) === hand) return pitch
+      if (pitches[i] != null && hands[i] === hand) return pitches[i]!
     }
-    // Past the last note this hand plays — stay where it finished.
     for (let i = Math.min(from, pitches.length) - 1; i >= 0; i--) {
-      const pitch = pitches[i]
-      if (pitch != null && handForPitch(pitch, songPitches) === hand) return pitch
+      if (pitches[i] != null && hands[i] === hand) return pitches[i]!
     }
     return null
   }
