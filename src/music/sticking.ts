@@ -11,7 +11,7 @@
  * the rules below only fill the gaps where her table stops short. The rules are
  * documented in docs/mallet-sticking-rules.md.
  */
-import { AUTHORED_STICKING, CLOSET_KEY_LEFT_DEGREES, TWO_NOTE_SONGS } from '../data/sticking'
+import { AUTHORED_STICKING, TWO_NOTE_SONGS } from '../data/sticking'
 
 export type Hand = 'L' | 'R'
 
@@ -80,11 +80,6 @@ export function stickingForPhrase(phrase: readonly number[]): Hand[] {
   return hands
 }
 
-/** Scale degree above the tonic, 0-11. */
-function degreeAbove(pitch: number, tonicPitchClass: number): number {
-  return (((pitch - tonicPitchClass) % 12) + 12) % 12
-}
-
 /**
  * The hand for every note of a song, aligned to the note list — null at rests,
  * where no mallet plays.
@@ -92,30 +87,25 @@ function degreeAbove(pitch: number, tonicPitchClass: number): number {
 export function stickingForSong(
   songId: string,
   pitches: readonly (number | null)[],
-  tonicPitchClass: number,
 ): (Hand | null)[] {
   const sounding = pitches.filter((p): p is number => p !== null)
-  const hands = new Array<Hand | null>(sounding.length)
-
-  const authored = AUTHORED_STICKING[songId]
-  if (authored && authored.hands.length > 0) {
-    // A sequence covering one verse of a repeating song is tiled to fill.
-    for (let i = 0; i < sounding.length; i++) {
-      const h = authored.hands[i % authored.hands.length]
-      hands[i] = i < authored.hands.length || authored.hands.length === 0 || sounding.length % authored.hands.length === 0
-        ? h ?? null
-        : null
-    }
-  }
+  const hands = new Array<Hand | null>(sounding.length).fill(null)
 
   if (TWO_NOTE_SONGS.has(songId) && sounding.length > 0) {
+    // Lacie states these as a rule rather than a sequence: left hand on the
+    // left note, right hand on the right note, for the whole song.
     const low = Math.min(...sounding)
     for (let i = 0; i < sounding.length; i++) hands[i] = sounding[i] === low ? 'L' : 'R'
-  }
-
-  if (songId === 'closet-key') {
-    for (let i = 0; i < sounding.length; i++) {
-      hands[i] = CLOSET_KEY_LEFT_DEGREES.has(degreeAbove(sounding[i]!, tonicPitchClass)) ? 'L' : 'R'
+  } else {
+    const authored = AUTHORED_STICKING[songId]?.hands
+    if (authored && authored.length > 0) {
+      // A sequence covering one verse of a repeating song is tiled to fill.
+      // Tiling only where it divides evenly; otherwise it is a prefix and the
+      // rules below finish the job, rather than drifting out of step.
+      const tiles = sounding.length % authored.length === 0
+      for (let i = 0; i < sounding.length; i++) {
+        if (tiles || i < authored.length) hands[i] = authored[i % authored.length]!
+      }
     }
   }
 

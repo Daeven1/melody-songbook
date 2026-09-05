@@ -14,13 +14,9 @@ const pitchesOf = (id: string, key = 'C') =>
 const soundingOf = (id: string, key = 'C') =>
   pitchesOf(id, key).filter((p): p is number => p !== null)
 
-const TONIC: Record<string, number> = { C: 0, D: 2, F: 5, G: 7 }
-
 /** Hands as a compact string, for comparing against Lacie's table by eye. */
 const handsOf = (id: string, key = 'C') =>
-  stickingForSong(id, pitchesOf(id, key), TONIC[key]!)
-    .filter(h => h !== null)
-    .join('')
+  stickingForSong(id, pitchesOf(id, key)).filter(h => h !== null).join('')
 
 describe('authored sticking aligns with the real songs', () => {
   it('every authored sequence divides its song exactly', () => {
@@ -28,7 +24,6 @@ describe('authored sticking aligns with the real songs', () => {
     // note count, the transcription is off and the sticking would silently
     // drift out of step with the melody.
     for (const [id, entry] of Object.entries(AUTHORED_STICKING)) {
-      if (!entry.complete) continue
       const count = soundingOf(id).length
       expect(
         count % entry.hands.length,
@@ -40,7 +35,7 @@ describe('authored sticking aligns with the real songs', () => {
   it('gives every sounding note a hand and every rest none', () => {
     for (const song of SONGS) {
       const pitches = pitchesOf(song.id)
-      const hands = stickingForSong(song.id, pitches, 0)
+      const hands = stickingForSong(song.id, pitches)
       expect(hands.length).toBe(pitches.length)
       pitches.forEach((pitch, i) => {
         if (pitch === null) expect(hands[i], `${song.id} rest at ${i}`).toBeNull()
@@ -51,6 +46,23 @@ describe('authored sticking aligns with the real songs', () => {
 })
 
 describe("Lacie's examples", () => {
+  it('Hot Cross Buns — alternating throughout, now fully specified', () => {
+    expect(handsOf('hot-cross-buns')).toBe('RLR' + 'RLR' + 'RLRL' + 'RLRL' + 'RLR')
+  })
+
+  it('Peas Porridge Hot — repeated notes alternate, then settle one hand per note', () => {
+    expect(handsOf('peas-porridge-hot')).toBe('RLRL' + 'RLRL' + 'LLL' + 'RRR' + 'RLR')
+  })
+
+  it('Mary Had a Little Lamb — two verses, fully specified', () => {
+    expect(handsOf('mary-had-a-little-lamb')).toBe('RLRLRRRLLLRRR' + 'RLRLRRRLLRLR')
+  })
+
+  it('Shake Them Simmons Down — second phrase now ends with both lefts', () => {
+    expect(handsOf('shake-them-simmons-down'))
+      .toBe('LLLRRLR' + 'LLLRRLL' + 'LLLRRLR' + 'RRLLR')
+  })
+
   it('Bow Wow Wow — do-do-do left, mi-mi-mi-mi alternating, mi-re-do crossover', () => {
     //  do-do-do | mi-mi-mi-mi | so-so-so-la-so-mi-do  mi-re-do
     expect(handsOf('bow-wow-wow')).toBe('LLL' + 'RLRL' + 'RRRRRLL' + 'RLR')
@@ -60,15 +72,15 @@ describe("Lacie's examples", () => {
     expect(handsOf('teddy-bear')).toBe('RRLRRLRLR'.repeat(4))
   })
 
-  it('Great Big House — left anchored on mi throughout', () => {
+  it('Great Big House — left anchored on mi, closing on a crossover', () => {
     expect(handsOf('great-big-house-in-new-orleans'))
-      .toBe('LRRRLRR' + 'LRRRLR' + 'LRRRLRR' + 'LRLRL')
+      .toBe('LRRRLRR' + 'LRRRLR' + 'LRRRLRR' + 'LRRLR')
   })
 
   it('Au Clair de la Lune — the same re takes different hands in different phrases', () => {
     //  do-do-do | re-mi-re | do-mi-re-re-do   ... then the verse repeats
     const hands = handsOf('au-clair-de-la-lune')
-    expect(hands).toBe('LLLRRRLRLLL'.repeat(2))
+    expect(hands).toBe('LLLRRRLRLLR'.repeat(2))
     // The 4th note is re (right), the 9th is also re (left) — the case that
     // rules out any pitch-to-hand mapping.
     expect(hands[3]).toBe('R')
@@ -87,7 +99,7 @@ describe("Lacie's examples", () => {
 
   it('Mo Li Hua', () => {
     expect(handsOf('mo-li-hua'))
-      .toBe('LLLLRRLLLRL' + 'LLLLRRLLLRL' + 'RRRLRRRL' + 'RLRRRLRLRL')
+      .toBe('LLLLRRLLLRL' + 'LLLLRRLLLRL' + 'RRRLRRRR' + 'RLRRRLRLRL')
   })
 
   it('two-note songs put one hand on each note, never alternating', () => {
@@ -96,20 +108,18 @@ describe("Lacie's examples", () => {
       if (!song) continue
       const sounding = soundingOf(id)
       const low = Math.min(...sounding)
-      const hands = stickingForSong(id, pitchesOf(id), 0).filter(h => h !== null)
+      const hands = stickingForSong(id, pitchesOf(id)).filter(h => h !== null)
       sounding.forEach((pitch, i) => {
         expect(hands[i], `${id} note ${i}`).toBe(pitch === low ? 'L' : 'R')
       })
     }
   })
 
-  it('Closet Key treats do and re as left, mi as right', () => {
-    const hands = handsOf('closet-key')
-    const sounding = soundingOf('closet-key')
-    sounding.forEach((pitch, i) => {
-      const degree = ((pitch - 60) % 12 + 12) % 12
-      expect(hands[i], `note ${i} degree ${degree}`).toBe(degree === 4 ? 'R' : 'L')
-    })
+  it('Closet Key — two-note sticking with re in the left hand, ending on a crossover', () => {
+    expect(handsOf('closet-key')).toBe('LLRRLLRLLRRLR'.repeat(2))
+    // The song's final do takes the RIGHT hand — a crossover, and the reason
+    // this song is authored rather than derived from scale degree.
+    expect(handsOf('closet-key').at(-1)).toBe('R')
   })
 
   it('sticking is relative — the same hands in every key', () => {
@@ -158,7 +168,7 @@ describe('stickingForPhrase — the fallback rules', () => {
 
 describe('malletPositions', () => {
   const pitches = [67, 67, 67, 64, 64]
-  const hands = stickingForSong('frog-in-the-meadow', pitches, 0)
+  const hands = stickingForSong('frog-in-the-meadow', pitches)
 
   it('rests each mallet on the first note it will play', () => {
     expect(malletPositions(pitches, hands, null)).toEqual({ left: 64, right: 67 })

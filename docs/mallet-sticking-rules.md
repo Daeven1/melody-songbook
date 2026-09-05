@@ -100,24 +100,43 @@ song data. Checked by generating solfège from `songs.json`:
 
 Rests carry no hand: the mallet isn't playing.
 
+## Lacie's revised table (supersedes the first pass)
+
+Her second pass covers all 19 songs and changes several earlier answers. Her
+stated principle for the revision:
+
+> Alternating mallets is very complicated and adds a lot to remember. The
+> complexity in alternating should only be prioritized when it makes the
+> absolute best outcome.
+
+She also notes the song ORDER encodes a skill progression — a two-note song is
+easier than a three-note song — so sticking gets more demanding as the book goes
+on, rather than being uniform.
+
+Changed from her first pass:
+
+| Song | Change |
+|---|---|
+| Au Clair de la Lune | verse now ends on a crossover (right) instead of left |
+| Great Big House | closing phrase `mi-so-mi-re-do` is now `L-R-R-L-R` |
+| Shake Them 'Simmons Down | second phrase now ends `…left-left` |
+| Mo Li Hua | third phrase now ends right instead of left |
+| Closet Key | now a full sequence; final `do` is a crossover, which the old scale-degree rule got wrong |
+| Hot Cross Buns, Mary, Peas Porridge | now complete |
+
 ## Coverage — where the table stops
 
-**Fully specified** (sticking authored for every sounding note): Bow Wow Wow,
-Pumpkin Pumpkin, Teddy Bear, Ring Around the Rosie, Great Big House, ECE Has a
-Music Room, Shake Them 'Simmons Down, Cut the Cake, Mo Li Hua, Au Clair de la
-Lune. Plus the five rule-based songs (the four two-note songs and Closet Key).
+All 19 songs are now covered: 15 as authored sequences, 4 (the two-note songs)
+as a rule. Every sequence divides its song's note count exactly, asserted by
+test — without that, a miscounted syllable would drift the sticking silently out
+of step with the melody.
 
-**Partly specified — still needs Lacie:**
+**Two hands are inferred rather than given**, and are worth confirming:
 
-| Song | Given | Missing |
+| Song | Issue | What was assumed |
 |---|---|---|
-| Hot Cross Buns | `mi-re-do` (3 of 17) | the 11-note third phrase, `do-do-do-do-re-re-re-re-mi-re-do` |
-| Mary Had a Little Lamb | first 13 of 25 | everything from `mi-mi-mi-mi-re-do-re…` onward |
-| Peas Porridge Hot | `mi-mi-mi-mi` (4 of 17) | the `re-re-re-re` and `do-do-do-re-re-re-mi-re-do` phrases |
-| I'm an Acorn | one verse (14 of 28) | second verse, which ends `re-do` where the first ends `re-re` |
-
-Peas Porridge Hot's entry also lists three hands (`left-right-left`) for a
-four-note figure — probably a slip for `left-right-left-right`.
+| Pumpkin, Pumpkin | `so-so-so-la-so-mi-do-re` has 8 notes but 7 hands listed | final `re` taken as LEFT, following the left hand already on `do`, and matching her earlier draft of the line |
+| I'm an Acorn | `mi-so-so-la` (4 notes) has 8 hands listed, so cannot be read directly | her earlier `left-right-right-right` kept, which makes the verse add up to 14 |
 
 ## Notes on the data
 

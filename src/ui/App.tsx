@@ -8,7 +8,7 @@ import { flattenNotes } from '../play/schedule'
 import { Notation } from '../render/Notation'
 import { Xylophone } from '../render/Xylophone'
 import { BordunStaff } from '../render/BordunStaff'
-import { TONIC_PITCH_CLASS, barsForRange, rangeForPitches } from '../render/xylophoneLayout'
+import { barsForRange, rangeForPitches } from '../render/xylophoneLayout'
 import { malletPositions, stickingForSong } from '../music/sticking'
 import { BORDUN_PLAYBACK_SHIFT } from '../play/schedule'
 
@@ -80,8 +80,8 @@ export function App() {
   // is chosen per phrase rather than per pitch — see src/music/sticking.ts and
   // docs/mallet-sticking-rules.md.
   const melodyHands = useMemo(
-    () => stickingForSong(song.id, notes.map(n => n.pitch), TONIC_PITCH_CLASS[key]),
-    [song.id, notes, key],
+    () => stickingForSong(song.id, notes.map(n => n.pitch)),
+    [song.id, notes],
   )
 
   // Each mallet waits on the note it is about to play and travels the
