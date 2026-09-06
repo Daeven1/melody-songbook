@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
 import songsJson from '../data/songs.json'
 import bordunsJson from '../data/borduns.json'
 import type { Bordun, BordunId, KeyName, Song } from '../types'
@@ -11,6 +11,23 @@ import { BordunStaff } from '../render/BordunStaff'
 import { barsForRange, rangeForPitches } from '../render/xylophoneLayout'
 import { malletPositions, stickingForSong } from '../music/sticking'
 import { BORDUN_PLAYBACK_SHIFT } from '../play/schedule'
+import { goTo, useRoute } from './route'
+
+// The bar bench brings three.js with it, so it loads only when someone opens it;
+// the play-along stays as light as before.
+const Bench = lazy(() => import('../bench/Bench'))
+
+export function App() {
+  const route = useRoute()
+  if (route === 'bench') {
+    return (
+      <Suspense fallback={<div className="h-dvh grid place-items-center text-neutral-500">Setting up the bench…</div>}>
+        <Bench />
+      </Suspense>
+    )
+  }
+  return <Songbook />
+}
 
 const SONGS = (songsJson as unknown as Song[]).slice().sort((a, b) =>
   a.level - b.level || a.title.localeCompare(b.title),
@@ -21,7 +38,7 @@ const REPEAT_CHOICES = [1, 2, 4, 8] as const
 const MIN_BPM = 40
 const MAX_BPM = 180
 
-export function App() {
+function Songbook() {
   const [songId, setSongId] = useState(SONGS[0]!.id)
   const [key, setKey] = useState<KeyName>('C')
   const [bordunId, setBordunId] = useState<BordunId>(BORDUNS[0]!.id)
@@ -248,8 +265,16 @@ export function App() {
         </div>
 
         <button
-          onClick={() => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen())}
+          onClick={() => { stop(); goTo('bench') }}
           className="ml-auto px-3 py-1 rounded border"
+          title="A 3D xylophone for practising taking bars off and putting them back"
+        >
+          Bar bench
+        </button>
+
+        <button
+          onClick={() => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen())}
+          className="px-3 py-1 rounded border"
         >
           Fullscreen
         </button>

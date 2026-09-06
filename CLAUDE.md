@@ -21,6 +21,24 @@ Two cleanly separated halves:
 
 `npm test` · `npx tsc --noEmit` · `npm run build` · `vercel deploy --prod --yes`
 
+## The bar bench (`#bench`)
+
+A second screen, reached from the "Bar bench" button in the footer or by opening
+`/#bench`: a 3D alto xylophone (three.js) for teaching how bars come off and go
+back on — lift straight up so the hole clears the peg, tilt, rest inside the
+box — plus the F/F♯ swap by key, mallets you can pick up and play, and a
+transparent-background PNG export. Routing is a hash (`src/ui/route.ts`), so the
+static host needs nothing.
+
+- `src/bench/model.ts` — pure geometry (centimetres, Sonor alto proportions),
+  bar layout via `barsForRange` so colours and the F♯ swap match the play-along,
+  and the selection helpers. Unit-tested in `tests/bench/`.
+- `src/bench/scene.ts` — everything three.js: meshes, poses, picking, camera,
+  export. Browser-only; verify it by looking, not by test.
+- `src/bench/Bench.tsx` — the panel, keyboard, and React state. Loaded lazily so
+  the songbook's chunk stays the same size; three.js lands in its own chunk.
+- Sound reuses `createBellInstrument`, so a struck bar sounds like the play-along.
+
 ---
 
 ## Layout lessons (learned the hard way — please don't relearn these)
