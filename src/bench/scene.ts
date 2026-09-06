@@ -152,7 +152,8 @@ export function createBenchScene(canvas: HTMLCanvasElement, initialKey: KeyName,
   const camera = new THREE.PerspectiveCamera(36, 1, 1, 2000)
 
   scene.add(new THREE.HemisphereLight(0xfff6ea, 0x9c8b7a, 1.9))
-  const sun = new THREE.DirectionalLight(0xfff3e0, 2.9)
+  const SUN_SIDE_INTENSITY = 2.9, SUN_TOP_INTENSITY = 1.7
+  const sun = new THREE.DirectionalLight(0xfff3e0, SUN_SIDE_INTENSITY)
   // Over the player's left shoulder from an oblique view; straight overhead as the camera
   // goes top-down, so the crowned bars shade evenly and read as a flat plan.
   const SUN_SIDE = new THREE.Vector3(-50, 110, 70), SUN_TOP = new THREE.Vector3(0.5, 140, 2)
@@ -171,10 +172,10 @@ export function createBenchScene(canvas: HTMLCanvasElement, initialKey: KeyName,
   scene.add(ground)
 
   // ---- materials ----
-  // pale birch ply: bright faces, ply-edge ends a shade warmer, the inside a shade deeper
-  const birch = std({ color: srgb(0xf4e4c6), roughness: 0.58 })
-  const birchEdge = std({ color: srgb(0xe9d4ae), roughness: 0.66 })
-  const birchInner = std({ color: srgb(0xdfcaa2), roughness: 0.72 })
+  // golden birch ply: warm faces, ply-edge ends a shade warmer still, the inside a shade deeper
+  const birch = std({ color: srgb(0xecd6a4), roughness: 0.6 })
+  const birchEdge = std({ color: srgb(0xdfc58c), roughness: 0.68 })
+  const birchInner = std({ color: srgb(0xd3b77f), roughness: 0.74 })
   const rubber = std({ color: srgb(0x141414), roughness: 0.95 })
   const cordMat = std({ color: srgb(0x1a1a1a), roughness: 1 })
   const knobMat = std({ color: srgb(0x111111), roughness: 0.4, metalness: 0.2 })
@@ -435,7 +436,10 @@ export function createBenchScene(canvas: HTMLCanvasElement, initialKey: KeyName,
     }
     if (orbit.spin) orbit.theta += 0.004
     applyCamera()
-    sun.position.lerpVectors(SUN_SIDE, SUN_TOP, THREE.MathUtils.clamp((0.5 - orbit.phi) / 0.3, 0, 1))
+    // Overhead, the sun lands square on every top face, so it also eases off as it climbs.
+    const overhead = THREE.MathUtils.clamp((0.5 - orbit.phi) / 0.3, 0, 1)
+    sun.position.lerpVectors(SUN_SIDE, SUN_TOP, overhead)
+    sun.intensity = THREE.MathUtils.lerp(SUN_SIDE_INTENSITY, SUN_TOP_INTENSITY, overhead)
     for (const o of objects) {
       o.pivot.position.lerp(o.target.pos, ease)
       q.setFromEuler(o.target.rot); o.pivot.quaternion.slerp(q, ease)
