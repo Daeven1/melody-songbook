@@ -151,8 +151,8 @@ export function createBenchScene(canvas: HTMLCanvasElement, initialKey: KeyName,
   const scene = new THREE.Scene()
   const camera = new THREE.PerspectiveCamera(36, 1, 1, 2000)
 
-  scene.add(new THREE.HemisphereLight(0xfff4e6, 0x8c7a6a, 1.4))
-  const sun = new THREE.DirectionalLight(0xfff1dc, 2.4)
+  scene.add(new THREE.HemisphereLight(0xfff6ea, 0x9c8b7a, 1.9))
+  const sun = new THREE.DirectionalLight(0xfff3e0, 2.9)
   // Over the player's left shoulder from an oblique view; straight overhead as the camera
   // goes top-down, so the crowned bars shade evenly and read as a flat plan.
   const SUN_SIDE = new THREE.Vector3(-50, 110, 70), SUN_TOP = new THREE.Vector3(0.5, 140, 2)
@@ -162,7 +162,7 @@ export function createBenchScene(canvas: HTMLCanvasElement, initialKey: KeyName,
   Object.assign(sun.shadow.camera, { left: -90, right: 90, top: 90, bottom: -90, near: 10, far: 300 })
   sun.shadow.bias = -0.0004
   scene.add(sun)
-  const fill = new THREE.DirectionalLight(0xdfe8ff, 0.8)
+  const fill = new THREE.DirectionalLight(0xe6edff, 1.1)
   fill.position.set(70, 30, -50)
   scene.add(fill)
 
@@ -171,9 +171,10 @@ export function createBenchScene(canvas: HTMLCanvasElement, initialKey: KeyName,
   scene.add(ground)
 
   // ---- materials ----
-  const birch = std({ color: srgb(0xead8b4), roughness: 0.62 })
-  const birchEdge = std({ color: srgb(0xd9c49c), roughness: 0.7 })
-  const birchInner = std({ color: srgb(0xd3bc93), roughness: 0.75 })
+  // pale birch ply: bright faces, ply-edge ends a shade warmer, the inside a shade deeper
+  const birch = std({ color: srgb(0xf4e4c6), roughness: 0.58 })
+  const birchEdge = std({ color: srgb(0xe9d4ae), roughness: 0.66 })
+  const birchInner = std({ color: srgb(0xdfcaa2), roughness: 0.72 })
   const rubber = std({ color: srgb(0x141414), roughness: 0.95 })
   const cordMat = std({ color: srgb(0x1a1a1a), roughness: 1 })
   const knobMat = std({ color: srgb(0x111111), roughness: 0.4, metalness: 0.2 })
@@ -213,11 +214,13 @@ export function createBenchScene(canvas: HTMLCanvasElement, initialKey: KeyName,
     const m = new THREE.Mesh(new THREE.ExtrudeGeometry(f, { depth: WALL, bevelEnabled: false }), birchInner)
     m.rotation.x = -Math.PI / 2; m.position.y = FLOOR_TOP - WALL; m.receiveShadow = true; frame.add(m)
   }
-  // end plates: the low-end one spans the box and holds the mallets; the high-end one is half as wide
+  // end plates: each spans the box at its own end, so the wide low-end plate holds the mallets
+  // and two knobs while the narrow high-end plate carries one knob in its centre; both sit flush
+  // with the end wall below and cover the cords where they run in under them
   const LOW_PLATE_X = -(HL_OUT - PLATE_L / 2)
   const MALLET_HOLES: [number, number][] = [[LOW_PLATE_X - 1.5, -2.2], [LOW_PLATE_X + 1, 2.6]]
   for (const s of [-1, 1] as const) {
-    const px = s * (HL_OUT - PLATE_L / 2), pw = s < 0 ? boxWidthAt(-HL_OUT) + 1 : (boxWidthAt(HL_OUT) + 1) / 2
+    const px = s * (HL_OUT - PLATE_L / 2), pw = boxWidthAt(s * HL_OUT) + 1
     slab(PLATE_L, PLATE_T, pw, px, PLATE_T / 2, 0, birch)
     const kx = s * (HL_OUT - 2.2)
     for (const kz of (s < 0 ? [-cordZAt(kx), cordZAt(kx)] : [0])) {

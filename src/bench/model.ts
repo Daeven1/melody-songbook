@@ -15,24 +15,24 @@ import { barsForRange, type XylophoneBar } from '../render/xylophoneLayout'
 export const BENCH_RANGE = [60, 81] as const
 
 export const BOX = {
-  pitch: 4.0,          // bar centre to bar centre
-  barWidth: 3.2,
+  pitch: 3.7,          // bar centre to bar centre
+  barWidth: 3.0,
   barThickness: 2.0,
   lengthLow: 30,       // the lowest bar
   lengthHigh: 20,      // the highest bar
   holeRadius: 0.55,
   wall: 1.5,
-  height: 16,
+  height: 17,
   widthLow: 20,        // outer width at the low end
-  widthHigh: 14,       // outer width at the high end
+  widthHigh: 10.5,     // outer width at the high end — about half, so the small end plate spans it
   notchHeight: 2.2,    // the cove cut into the long walls just inboard of each foot
   notchLength: 6,
-  plateLength: 11,
-  plateThickness: 1.2,
-  plateIn: 2.6,        // how far each plate laps onto the box top
+  plateLength: 7,
+  plateThickness: 1.4,
+  plateIn: 2.0,        // how far each plate laps onto the box top
   cordY: 0.55,         // cord centre above the wall top
   /** Half the box length: thirteen bars plus a little past the outermost ones. */
-  halfLength: (13 * 4.0 + 6) / 2,
+  halfLength: (13 * 3.7 + 4) / 2,
 } as const
 
 export const BAR_Y = BOX.cordY + 0.6                              // underside of a seated bar
