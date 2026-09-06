@@ -19,7 +19,12 @@ Two cleanly separated halves:
 2. **Runtime app** (`src/`) — reads `src/data/*.json`. Nothing under `src/` may
    import `fflate`, `@xmldom/xmldom`, or anything under `scripts/`.
 
-`npm test` · `npx tsc --noEmit` · `npm run build` · `vercel deploy --prod --yes`
+`npm test` · `npx tsc --noEmit` · `npm run build` · `vercel deploy --prod --yes --scope daeven1s-projects`
+
+(Without `--scope` the CLI answers "Not authorized" even though the project is
+linked — the link points at the team, the CLI's default scope is the personal
+account. Preview deployments are behind Deployment Protection, so a browser
+check has to use the production alias.)
 
 ## The bar bench (`#bench`)
 
